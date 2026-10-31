@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Renamer",
+  "short_name": "Renamer",
+  "version": "1.0.0",
+  "description": "One click: finds the files on this page, names them properly using your company's Smart Renamer server, and downloads them.",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "scripting", "downloads", "storage", "contextMenus"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Rename & download files on this page (Alt+Shift+R)",
+    "default_icon": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" }
+  },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "commands": {
+    "_execute_action": { "suggested_key": { "default": "Alt+Shift+R" }, "description": "Rename & download files on this page" }
+  },
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'" }
+}

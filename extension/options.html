@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Renamer · Settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="opt">
+  <div class="opt-card">
+    <header><img src="icons/32.png" alt=""><b>Smart Renamer settings</b></header>
+    <form id="f" novalidate>
+      <label for="server">Server address</label>
+      <input id="server" type="url" placeholder="https://renamer.kramski.local" spellcheck="false" required>
+      <p class="hint">The address of the Smart Renamer website your company runs.</p>
+
+      <label for="token">Personal key</label>
+      <input id="token" type="password" placeholder="krn_…" spellcheck="false" autocomplete="off" required>
+      <p class="hint">Create it on the website under <b>Account → Browser button</b>. It is stored only in this browser.</p>
+
+      <label for="folder">Save into this folder inside Downloads</label>
+      <input id="folder" type="text" maxlength="60" placeholder="Renamed (leave empty for Downloads itself)">
+
+      <div id="msg" class="hidden"></div>
+      <div class="actions"><button class="primary" type="submit">Save and test</button></div>
+    </form>
+    <p class="hint">Shortcut: <b>Alt+Shift+R</b> on any page. Change it at <span class="mono">chrome://extensions/shortcuts</span>.</p>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

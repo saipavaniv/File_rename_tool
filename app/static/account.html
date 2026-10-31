@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Account · Smart Renamer</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="hidden">
+  <header id="top"></header>
+  <main>
+    <div class="page-head"><div><h1>Account</h1><p class="muted">Your password and the browser button.</p></div></div>
+    <div id="first" class="alert warn hidden">Welcome. Please choose your own password before you start.</div>
+    <div class="grid-2">
+      <form class="card card-pad" id="pwForm" novalidate>
+        <h2>Change password</h2>
+        <div id="pwMsg" class="alert hidden" role="alert"></div>
+        <div class="field"><label for="cur">Current password</label><input type="password" id="cur" autocomplete="current-password" maxlength="128"></div>
+        <div class="field"><label for="new1">New password</label><input type="password" id="new1" autocomplete="new-password" maxlength="128"></div>
+        <div class="field"><label for="new2">Repeat new password</label><input type="password" id="new2" autocomplete="new-password" maxlength="128"></div>
+        <p class="muted small">At least 12 characters, with three of: lowercase, uppercase, digits, symbols. A short sentence works well.</p>
+        <button class="primary" type="submit">Save password</button>
+      </form>
+
+      <section class="card card-pad" id="extCard">
+        <h2>Browser button (Chrome / Edge)</h2>
+        <p class="muted small">The button renames every file on the page you are looking at and downloads it. It needs a personal key that links it to your account.</p>
+        <ol class="steps small">
+          <li>Install the extension (IT can do this for everyone, or see the README).</li>
+          <li>Click <b>Create key</b> below and copy it. It is shown only once.</li>
+          <li>Open the extension's settings, paste this site's address and the key.</li>
+        </ol>
+        <div class="row field">
+          <input type="text" id="tokName" value="My browser" maxlength="80" aria-label="Key name">
+          <button class="primary" id="mkTok">Create key</button>
+        </div>
+        <div id="newTok" class="hidden field">
+          <label>Your new key: copy it now</label>
+          <div class="token-box" id="tokVal"></div>
+          <div class="row"><button class="sm" id="copyTok">Copy</button><span class="muted small">Server address: <span class="mono" id="origin"></span></span></div>
+        </div>
+        <table><thead><tr><th>Key</th><th>Last used</th><th>Expires</th><th></th></tr></thead><tbody id="toks"></tbody></table>
+      </section>
+    </div>
+  </main>
+  <script src="/static/common.js"></script>
+  <script src="/static/account.js"></script>
+</body>
+</html>

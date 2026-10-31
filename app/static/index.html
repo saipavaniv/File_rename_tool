@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Rename files · Smart Renamer</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="hidden">
+  <header id="top"></header>
+  <main>
+    <div class="page-head">
+      <div>
+        <h1>Rename files</h1>
+        <p class="muted">Drop files in. Each one is read on the company server and given a clear name. Files are never stored.</p>
+      </div>
+    </div>
+
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files to rename">
+      <div class="drop-icon" id="dropIcon"></div>
+      <strong>Drop files here, or click to choose</strong>
+      <span class="muted small" id="dropHint">PDF, Word, Excel, PowerPoint, emails (.msg, .eml), scans, CAD (DXF, DWG, STEP, IGES) and more</span>
+      <input type="file" id="pick" multiple class="hidden">
+    </div>
+
+    <div id="resultsArea" class="hidden">
+      <div class="results-bar">
+        <h2 id="count">Files</h2>
+        <span class="spacer"></span>
+        <button class="ghost sm" id="clear">Clear list</button>
+        <button class="primary" id="all">Download all</button>
+      </div>
+      <div id="list"></div>
+    </div>
+  </main>
+  <script src="/static/common.js"></script>
+  <script src="/static/rename.js"></script>
+</body>
+</html>

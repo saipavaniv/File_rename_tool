@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Renamer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/32.png" alt="">
+    <b>Smart Renamer</b>
+    <span class="sp"></span>
+    <button class="link" id="settings" title="Settings">Settings</button>
+  </header>
+
+  <div id="setup" class="empty hidden">
+    <b>Connect to your company server</b>
+    <p>Add the server address and your personal key once.</p>
+    <button class="primary" id="openSetup">Open settings</button>
+  </div>
+
+  <div id="main" class="hidden">
+    <div class="status" id="status">Looking for files on this page…</div>
+    <div class="bar"><i id="progress"></i></div>
+    <div id="access" class="access hidden"></div>
+    <ul id="list"></ul>
+    <div id="none" class="empty hidden">
+      <b>No files found on this page</b>
+      Open the email or page that has the attachments, then click again. You can also right-click any link and choose <i>Rename &amp; download</i>.
+    </div>
+    <footer>
+      <button id="again">Scan again</button>
+      <button id="retry" class="hidden">Retry failed</button>
+      <span class="sp"></span>
+      <button class="link" id="site">Open website</button>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

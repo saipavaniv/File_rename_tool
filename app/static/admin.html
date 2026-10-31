@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin · Smart Renamer</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="hidden">
+  <header id="top"></header>
+  <main>
+    <div class="page-head"><div><h1>Admin</h1><p class="muted">People, company list, naming rules and the security log.</p></div></div>
+    <div class="tabs" role="tablist">
+      <button class="active" data-tab="users">Users</button>
+      <button data-tab="parties">Customers &amp; suppliers</button>
+      <button data-tab="settings">Naming rules</button>
+      <button data-tab="learning">Corrections</button>
+      <button data-tab="audit">Security log</button>
+    </div>
+
+    <section id="tab-users">
+      <div class="grid-2">
+        <div class="card"><div class="table-wrap"><table>
+          <thead><tr><th>User</th><th>Role</th><th>Last sign-in</th><th></th></tr></thead>
+          <tbody id="users"></tbody></table></div></div>
+        <form class="card card-pad" id="userForm" novalidate>
+          <h2>Add a person</h2>
+          <div class="field"><label for="nu">Username</label><input type="text" id="nu" maxlength="63" autocapitalize="none" spellcheck="false" placeholder="e.g. r.kumar"></div>
+          <div class="field"><label for="nd">Full name</label><input type="text" id="nd" maxlength="120"></div>
+          <div class="field"><label for="nr">Role</label><select id="nr"><option value="user">User: renames files</option><option value="admin">Admin: also manages this page</option></select></div>
+          <div class="field"><label for="np">Temporary password</label><input type="text" id="np" maxlength="128" autocomplete="off"></div>
+          <p class="muted small">They must change it at first sign-in. <button type="button" class="ghost sm" id="gen">Generate one</button></p>
+          <button class="primary" type="submit">Add person</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="tab-parties" class="hidden">
+      <div class="card card-pad field">
+        <h2>Import from ERP (CSV)</h2>
+        <p class="muted small">Columns: <span class="mono">code, name, short_name, aliases, domains, kind</span>. Only <span class="mono">name</span> is required. Separate several aliases or email domains with <span class="mono">;</span>. The short name is what appears in file names.</p>
+        <div class="row"><input type="file" id="csv" accept=".csv,text/csv" aria-label="CSV file"><button class="primary" id="imp">Import</button></div>
+      </div>
+      <div class="card">
+        <div class="card-pad row"><input type="search" id="pq" placeholder="Search companies" aria-label="Search companies"><span class="muted small" id="pcount"></span></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Code</th><th>Name</th><th>In file names</th><th>Email domains</th><th>Type</th><th></th></tr></thead>
+          <tbody id="parties"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="hidden">
+      <form class="card card-pad" id="setForm" novalidate>
+        <h2>How names are built</h2>
+        <div class="field"><label for="tpl">Name pattern</label><input type="text" id="tpl" class="mono" maxlength="80">
+          <p class="muted small">Use <span class="kbd">{date}</span> <span class="kbd">{type}</span> <span class="kbd">{party}</span> <span class="kbd">{ref}</span> <span class="kbd">{subject}</span> joined by <span class="kbd">_</span> or <span class="kbd">-</span>. Example: <span class="mono" id="example"></span></p></div>
+        <div class="grid-2">
+          <div class="field"><label for="own">Our own company names (never used as the customer)</label><input type="text" id="own" placeholder="Kramski; Kramski India"></div>
+          <div class="field"><label for="dom">Our own email domains</label><input type="text" id="dom" placeholder="kramski.com"></div>
+          <div class="field"><label for="dord">Dates like 03/04/2026 mean</label><select id="dord"><option value="DMY">3 April 2026 (day first: India, Germany)</option><option value="MDY">March 4 2026 (month first: USA)</option></select></div>
+          <div class="field"><label for="thr">Mark as "Ready" when confidence is at least</label><input type="number" id="thr" min="0.5" max="0.99" step="0.01"></div>
+        </div>
+        <button class="primary" type="submit">Save rules</button>
+      </form>
+    </section>
+
+    <section id="tab-learning" class="hidden">
+      <div class="card">
+        <div class="card-pad"><h2>What people corrected most</h2><p class="muted small">Repeated corrections show where a new rule or a master-data alias would help.</p></div>
+        <div class="table-wrap"><table><thead><tr><th>Field</th><th>Suggested</th><th>Changed to</th><th>Times</th></tr></thead><tbody id="corr"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="tab-audit" class="hidden">
+      <div class="card">
+        <div class="card-pad row">
+          <select id="af" aria-label="Filter"><option value="">All events</option><option value="login">Sign-ins</option><option value="file">Files</option><option value="user">Users</option><option value="token">Extension keys</option><option value="settings">Settings</option></select>
+          <span class="spacer"></span>
+          <span id="verifyOut" class="small"></span>
+          <button id="verify">Check log integrity</button>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>When</th><th>Who</th><th>Event</th><th>Target</th><th>IP</th></tr></thead><tbody id="audit"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+  <script src="/static/common.js"></script>
+  <script src="/static/admin.js"></script>
+</body>
+</html>

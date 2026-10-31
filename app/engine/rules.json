@@ -1,0 +1,70 @@
+{
+  "_comment": "Document-type rules. Each keyword is a case-insensitive phrase (English + German). weight = how strongly it signals the type. Keywords found in the document title/header count 3x. Admins can edit this file without touching code.",
+  "doc_types": [
+    {"code": "RFQ",  "label": "Request for quotation", "keywords": {"request for quotation": 6, "request for quote": 6, "rfq": 5, "enquiry": 4, "inquiry": 3, "anfrage": 5, "angebotsanfrage": 6, "preisanfrage": 6}},
+    {"code": "QUO",  "label": "Quotation / offer", "keywords": {"quotation": 5, "quotation no": 4, "quote no": 4, "offer no": 4, "our offer": 3, "price offer": 4, "commercial offer": 4, "techno-commercial offer": 5, "validity": 1, "valid until": 2, "valid for": 1, "angebot": 5, "angebotsnummer": 5, "angebots-nr": 5, "gültig bis": 2, "unit price": 1, "total price": 1}},
+    {"code": "PO",   "label": "Purchase order", "keywords": {"purchase order": 7, "po no": 4, "po number": 4, "p.o. no": 4, "order no": 2, "bestellung": 6, "bestellnummer": 5, "bestell-nr": 5, "einkaufsbestellung": 7, "please supply": 3, "delivery schedule": 1}},
+    {"code": "OC",   "label": "Order confirmation", "keywords": {"order confirmation": 8, "order acknowledgement": 8, "order acknowledgment": 8, "auftragsbestätigung": 8, "bestellbestätigung": 8, "we confirm your order": 6}},
+    {"code": "PI",   "label": "Proforma invoice", "keywords": {"proforma invoice": 10, "pro forma invoice": 10, "pro-forma invoice": 10, "proforma": 6, "proformarechnung": 10}},
+    {"code": "INV",  "label": "Invoice", "keywords": {"invoice": 5, "tax invoice": 7, "invoice no": 5, "invoice number": 5, "gst invoice": 7, "commercial invoice": 6, "rechnung": 6, "rechnungsnummer": 6, "rechnungs-nr": 6, "amount due": 2, "total amount payable": 2, "hsn": 1, "cgst": 1, "sgst": 1, "igst": 1}},
+    {"code": "CN",   "label": "Credit / debit note", "keywords": {"credit note": 8, "debit note": 8, "gutschrift": 8, "belastungsanzeige": 8}},
+    {"code": "PAY",  "label": "Payment advice", "keywords": {"payment advice": 8, "remittance advice": 8, "zahlungsavis": 8, "payment confirmation": 6, "statement of account": 6, "kontoauszug": 5}},
+    {"code": "DN",   "label": "Delivery note / challan", "keywords": {"delivery note": 7, "delivery challan": 8, "challan no": 6, "packing list": 6, "packing slip": 6, "lieferschein": 8, "e-way bill": 5, "dispatch details": 3}},
+    {"code": "DRW",  "label": "Drawing", "keywords": {"drawing no": 6, "drawing number": 6, "dwg no": 6, "zeichnung": 5, "zeichnungsnummer": 6, "zeichnungs-nr": 6, "general tolerances": 4, "allgemeintoleranzen": 4, "iso 2768": 4, "din iso 2768": 4, "scale": 1, "maßstab": 2, "massstab": 2, "third angle projection": 4, "first angle projection": 4, "drawn by": 2, "gezeichnet": 2, "sheet": 1, "blatt": 1}},
+    {"code": "SPEC", "label": "Specification / datasheet", "keywords": {"specification": 4, "technical specification": 6, "datasheet": 5, "data sheet": 5, "lastenheft": 7, "pflichtenheft": 7, "requirements": 2, "werknorm": 5}},
+    {"code": "PPAP", "label": "PPAP documents", "keywords": {"ppap": 7, "part submission warrant": 9, "psw": 4, "production part approval": 9, "ppf": 3, "produktionsprozess- und produktfreigabe": 9}},
+    {"code": "ISIR", "label": "Initial sample report", "keywords": {"initial sample": 7, "initial sample inspection report": 9, "isir": 7, "erstmuster": 7, "erstmusterprüfbericht": 9, "empb": 7, "first article inspection": 8, "fai report": 7}},
+    {"code": "FMEA", "label": "FMEA", "keywords": {"fmea": 8, "failure mode and effects": 9, "failure mode": 4, "rpn": 3, "severity": 1, "occurrence": 1, "detection": 1}},
+    {"code": "CP",   "label": "Control plan", "keywords": {"control plan": 8, "produktionslenkungsplan": 9, "prüfplan": 5, "reaction plan": 4}},
+    {"code": "8D",   "label": "8D / complaint", "keywords": {"8d report": 9, "8d-report": 9, "8d": 3, "8-d": 3, "root cause": 4, "containment action": 5, "corrective action": 4, "complaint no": 5, "customer complaint": 6, "reklamation": 6, "reklamationsnummer": 6, "beanstandung": 5}},
+    {"code": "TR",   "label": "Test / inspection report", "keywords": {"test report": 7, "inspection report": 7, "measurement report": 7, "dimensional report": 7, "prüfbericht": 7, "messprotokoll": 7, "messbericht": 7, "cmm report": 7, "test result": 3, "cpk": 2, "capability study": 5}},
+    {"code": "CERT", "label": "Certificate", "keywords": {"certificate": 5, "certificate of conformity": 8, "certificate of compliance": 8, "material certificate": 8, "mill test certificate": 8, "inspection certificate": 7, "en 10204": 6, "3.1": 1, "zertifikat": 6, "werkszeugnis": 8, "abnahmeprüfzeugnis": 8, "iatf 16949": 3, "iso 9001": 2, "rohs": 3, "reach": 2}},
+    {"code": "NDA",  "label": "NDA", "keywords": {"non-disclosure agreement": 10, "non disclosure agreement": 10, "confidentiality agreement": 9, "geheimhaltungsvereinbarung": 10, "nda": 4}},
+    {"code": "AGR",  "label": "Agreement / contract", "keywords": {"agreement": 4, "contract": 4, "terms and conditions": 3, "vertrag": 5, "rahmenvertrag": 7, "supply agreement": 7, "quality agreement": 7, "qualitätssicherungsvereinbarung": 8}},
+    {"code": "MOM",  "label": "Minutes of meeting", "keywords": {"minutes of meeting": 9, "minutes of the meeting": 9, "mom": 3, "meeting minutes": 9, "besprechungsprotokoll": 9, "protokoll": 4, "action items": 3, "attendees": 3, "teilnehmer": 3}},
+    {"code": "SCHED","label": "Delivery schedule / forecast", "keywords": {"delivery schedule": 7, "forecast": 4, "call-off": 6, "lieferabruf": 8, "abruf": 4, "schedule agreement": 6}},
+    {"code": "PL",   "label": "Price list", "keywords": {"price list": 8, "preisliste": 8, "rate card": 6}}
+  ],
+
+  "kind_defaults": {
+    "dxf": {"code": "DRW", "score": 8},
+    "dwg": {"code": "DRW", "score": 8},
+    "step": {"code": "CAD", "score": 8},
+    "iges": {"code": "CAD", "score": 8},
+    "msg": {"code": "MAIL", "score": 3},
+    "eml": {"code": "MAIL", "score": 3}
+  },
+  "extra_type_labels": {"CAD": "3D CAD model", "MAIL": "Email", "DOC": "Document (type unknown)", "IMG": "Image / photo"},
+
+  "reference_labels": {
+    "QUO":  ["quotation\\s*(?:no|number|nr|#|ref)", "quote\\s*(?:no|number|#)", "offer\\s*(?:no|number|#)", "angebots?\\s*-?\\s*(?:nr|nummer)", "angebotsnummer"],
+    "RFQ":  ["rfq\\s*(?:no|number|#)?", "enquiry\\s*(?:no|number|ref)", "inquiry\\s*(?:no|number|ref)", "anfrage\\s*-?\\s*(?:nr|nummer)"],
+    "PO":   ["purchase\\s*order\\s*(?:no|number|nr|#)?", "p\\.?\\s*o\\.?\\s*(?:no|number|#)", "order\\s*(?:no|number|#)", "bestell\\s*-?\\s*(?:nr|nummer)", "bestellnummer", "your\\s*order"],
+    "OC":   ["order\\s*confirmation\\s*(?:no|number|#)?", "confirmation\\s*(?:no|number|#)", "auftrags\\s*-?\\s*(?:nr|nummer)", "auftragsbestätigung\\s*(?:nr)?", "order\\s*(?:no|number|#)"],
+    "INV":  ["invoice\\s*(?:no|number|nr|#)", "inv\\.?\\s*(?:no|#)", "bill\\s*(?:no|number|#)", "rechnungs\\s*-?\\s*(?:nr|nummer)", "rechnungsnummer"],
+    "PI":   ["proforma\\s*invoice\\s*(?:no|number|#)?", "pi\\s*(?:no|number|#)", "invoice\\s*(?:no|number|#)"],
+    "CN":   ["credit\\s*note\\s*(?:no|number|#)?", "debit\\s*note\\s*(?:no|number|#)?", "gutschrift\\s*-?\\s*(?:nr|nummer)?"],
+    "DN":   ["delivery\\s*(?:note|challan)\\s*(?:no|number|#)", "challan\\s*(?:no|number|#)", "lieferschein\\s*-?\\s*(?:nr|nummer)?", "packing\\s*list\\s*(?:no|#)"],
+    "DRW":  ["drawing\\s*(?:no|number|nr|#)", "dwg\\.?\\s*(?:no|#)", "zeichnungs\\s*-?\\s*(?:nr|nummer)", "zeichnungsnummer", "part\\s*(?:no|number|#)", "teile\\s*-?\\s*(?:nr|nummer)", "sachnummer", "material\\s*(?:no|number)"],
+    "8D":   ["8d\\s*(?:no|number|#)", "complaint\\s*(?:no|number|#)", "reklamations\\s*-?\\s*(?:nr|nummer)", "claim\\s*(?:no|number|#)"],
+    "TR":   ["report\\s*(?:no|number|#)", "prüfbericht\\s*-?\\s*(?:nr)?", "test\\s*(?:no|number)"],
+    "CERT": ["certificate\\s*(?:no|number|#)", "zertifikat\\s*-?\\s*(?:nr|nummer)?", "cert\\.?\\s*(?:no|#)"],
+    "ANY":  ["document\\s*(?:no|number|#)", "doc\\.?\\s*(?:no|#)", "our\\s*ref(?:erence)?", "ref(?:erence)?\\s*(?:no|number|#)", "beleg\\s*-?\\s*(?:nr|nummer)", "part\\s*(?:no|number|#)", "drawing\\s*(?:no|number|#)", "article\\s*(?:no|number|#)", "artikel\\s*-?\\s*(?:nr|nummer)"]
+  },
+
+  "date_labels_good": ["date", "dated", "datum", "issue date", "document date", "quotation date", "offer date", "order date", "po date", "invoice date", "bill date", "angebotsdatum", "bestelldatum", "rechnungsdatum", "ausstellungsdatum", "erstellt am", "created", "drawn", "report date", "sent", "gesendet"],
+  "date_labels_bad": ["valid until", "valid till", "validity", "gültig bis", "delivery date", "required by", "due date", "fällig", "liefertermin", "lieferdatum", "expiry", "expires", "expiration", "date of birth", "payment terms", "zahlungsziel", "deadline", "dispatch by", "eta"],
+
+  "generic_filename_patterns": ["^document\\s*\\d*$", "^doc\\d*$", "^untitled", "^unbenannt", "^new\\s", "^neu", "^scan", "^img[_\\-]?\\d", "^image\\d*", "^dsc[_\\-]?\\d", "^photo", "^download", "^attachment", "^anhang", "^file\\d*$", "^datei", "^\\d+$", "^[a-f0-9\\-]{16,}$", "^mail$", "^print", "^copy", "^kopie", "^book\\d*$", "^mappe\\d*$", "^sheet\\d*$", "^presentation\\d*$", "^präsentation"],
+
+  "subject_labels": ["subject", "betreff", "re", "title", "titel", "description", "beschreibung", "part name", "part description", "benennung", "bezeichnung", "item", "project", "projekt", "material", "werkstoff"],
+
+  "party_labels_to": ["to", "an", "customer", "kunde", "bill to", "billed to", "ship to", "consignee", "buyer", "käufer", "sold to", "client", "attention", "attn", "kind attn", "m/s", "messrs"],
+  "party_labels_from": ["from", "von", "supplier", "vendor", "lieferant", "seller", "verkäufer", "manufacturer", "hersteller"],
+
+  "legal_suffixes": ["GmbH & Co\\. KG", "GmbH & Co KG", "GmbH", "AG", "KG", "KGaA", "SE", "e\\.K\\.", "Pvt\\.? Ltd\\.?", "Private Limited", "Ltd\\.?", "Limited", "LLP", "Inc\\.?", "Incorporated", "LLC", "Corp\\.?", "Corporation", "Co\\.,? Ltd\\.?", "S\\.A\\.", "S\\.p\\.A\\.", "S\\.r\\.l\\.", "s\\.r\\.o\\.", "B\\.V\\.", "N\\.V\\.", "SAS", "SARL", "Oy", "AB", "Sp\\. z o\\.o\\.", "Kft\\.?", "Industries", "Enterprises"],
+
+  "free_email_domains": ["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "rediffmail.com", "icloud.com", "gmx.de", "gmx.net", "web.de", "t-online.de", "aol.com", "proton.me", "protonmail.com", "zoho.com"],
+
+  "subject_stopwords": ["the", "a", "an", "and", "or", "of", "for", "to", "in", "on", "with", "by", "from", "our", "your", "please", "find", "attached", "attachment", "regarding", "reg", "ref", "re", "fw", "fwd", "aw", "wg", "der", "das", "den", "dem", "und", "oder", "für", "von", "mit", "zu", "im", "am", "ihr", "ihre", "unser", "unsere", "anbei", "bitte", "betreff", "no", "nr", "dated", "dt", "page", "seite", "copy", "kind", "dear", "sir", "madam", "hello", "hi", "pdf", "docx", "xlsx", "kramski"]
+}

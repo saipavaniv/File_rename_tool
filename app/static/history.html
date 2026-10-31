@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>History · Smart Renamer</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="hidden">
+  <header id="top"></header>
+  <main>
+    <div class="page-head">
+      <div>
+        <h1>History</h1>
+        <p class="muted">Every file that was renamed: original name, new name, who, when, and its fingerprint (SHA-256).</p>
+      </div>
+      <div class="row">
+        <label class="row small hidden" id="allWrap"><input type="checkbox" id="all"> Everyone's files</label>
+        <button class="hidden" id="export">Export CSV</button>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div class="card-pad row">
+        <input type="search" id="q" placeholder="Search name, company, reference number or SHA-256" aria-label="Search history">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>When</th><th>Original → new name</th><th>Type</th><th>Company</th><th>Reference</th><th>Status</th><th id="userCol" class="hidden">User</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="card-pad row small muted">
+        <span id="pageInfo"></span><span class="spacer"></span>
+        <button class="sm" id="prev">Previous</button><button class="sm" id="next">Next</button>
+      </div>
+    </div>
+  </main>
+  <script src="/static/common.js"></script>
+  <script src="/static/history.js"></script>
+</body>
+</html>

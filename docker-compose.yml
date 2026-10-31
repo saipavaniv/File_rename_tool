@@ -1,0 +1,19 @@
+# docker compose up -d   then:   docker compose exec renamer python -m app.cli create-admin
+services:
+  renamer:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      SSL_CERTFILE: /certs/server.crt
+      SSL_KEYFILE: /certs/server.key
+    ports: ["8443:8443"]
+    volumes:
+      - ./data:/data
+      - ./certs:/certs:ro
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    mem_limit: 4g
