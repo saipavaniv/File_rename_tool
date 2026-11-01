@@ -23,21 +23,37 @@ STATIC = Path(__file__).parent / "static"
 
 
 def _bootstrap_admin(db):
-    """First start in the cloud: create the admin from ADMIN_USERNAME / ADMIN_PASSWORD (only if no users exist)."""
+    """Cloud helpers (no terminal there):
+    * first start: create the admin from ADMIN_USERNAME / ADMIN_PASSWORD (only if no users exist);
+    * forgot the password: set ADMIN_RESET=true too, restart, sign in, then delete both variables."""
     import os
 
     from sqlalchemy import func, select
 
     from . import audit
-    from .models import User
+    from .models import User, UserSession
     from .security import hash_password, password_problems
     pw = os.environ.get("ADMIN_PASSWORD", "")
-    if not pw or db.execute(select(func.count()).select_from(User)).scalar_one() > 0:
+    if not pw:
         return
     name = os.environ.get("ADMIN_USERNAME", "admin").strip().lower() or "admin"
     problem = password_problems(pw, name)
     if problem:
         log.error("ADMIN_PASSWORD not accepted: %s", problem)
+        return
+    if os.environ.get("ADMIN_RESET", "").strip().lower() in ("1", "true", "yes"):
+        u = db.execute(select(User).where(User.username == name)).scalar_one_or_none()
+        if u:
+            u.password_hash, u.is_active, u.role = hash_password(pw), True, "admin"
+            u.failed_logins, u.locked_until, u.must_change_password = 0, None, False
+            db.execute(delete(UserSession).where(UserSession.user_id == u.id))
+            audit.log(db, "admin.reset_env", u, target=name, ip="startup")
+            log.warning("Password for '%s' was reset from ADMIN_PASSWORD. Now delete ADMIN_PASSWORD and ADMIN_RESET.", name)
+            return
+    if db.execute(select(func.count()).select_from(User)).scalar_one() > 0:
+        if os.environ.get("ADMIN_RESET", "").strip().lower() not in ("1", "true", "yes"):
+            log.warning("ADMIN_PASSWORD is set but users already exist, so it was ignored. "
+                        "To reset the admin password, also set ADMIN_RESET=true and restart.")
         return
     u = User(username=name, display_name=name, role="admin", password_hash=hash_password(pw), must_change_password=False)
     db.add(u)

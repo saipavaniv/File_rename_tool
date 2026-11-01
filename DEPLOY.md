@@ -105,5 +105,6 @@ That's how real servers are run, and the same Dockerfile works there unchanged.
 | Page loads for about a minute, then works | Normal: the free app was asleep. |
 | "Invalid host header" | You're using a different address than Render's (e.g. your own domain). Add it to an `ALLOWED_HOSTS` environment variable. |
 | Can't sign in on the first deploy | Check the Render **Logs**: if `ADMIN_PASSWORD` was too weak, the log says why. Fix it, then use **Manual Deploy → Restart**. |
+| Forgot the online admin password | In Render → Environment set `ADMIN_PASSWORD` to a new strong password **and** `ADMIN_RESET` = `true`, save (Render restarts), sign in, then delete both variables. |
 | Build fails | Read the last red lines of the build log. Usually a typo in an environment variable, or a library version. |
 | 🐇 button says "Hop isn't running" | The app is asleep: open the website once to wake it, then click Connect again. |
