@@ -2,7 +2,6 @@
 "use strict";
 
 const ME = { user: null, csrf: null };
-const ICON_MARK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h16M4 17h7"/><path d="m15 15 3 3 4-5"/></svg>';
 
 function $(sel, root) { return (root || document).querySelector(sel); }
 function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
@@ -33,7 +32,7 @@ async function api(path, opts) {
   else if (opts.form) init.body = opts.form;
   else if (init.method !== "GET") init.body = "";
   const res = await fetch(path, init);
-  if (res.status === 401 && !opts.noRedirect) { location.href = "/login"; throw new Error("Please sign in"); }
+  if (res.status === 401 && !opts.noRedirect) { goLogin(); throw new Error("Please sign in"); }
   if (opts.raw) { if (!res.ok) throw new Error("Request failed (" + res.status + ")"); return res; }
   let body = null;
   try { body = await res.json(); } catch (e) { /* non-JSON */ }
@@ -59,16 +58,20 @@ function fmtDateTime(s) {
 }
 
 function brand() {
-  const mark = el("span", { class: "brand-mark" });
-  mark.innerHTML = ICON_MARK; // constant, trusted
-  return el("a", { class: "brand", href: "/" }, [mark, "Smart Renamer", el("small", { text: "Kramski India" })]);
+  return el("a", { class: "brand", href: "/" }, [el("span", { class: "brand-mark", "aria-hidden": "true", text: "🐇" }), "Hop"]);
+}
+
+function goLogin() {
+  const next = location.pathname + location.hash;
+  try { if (next !== "/" && next.startsWith("/") && !next.startsWith("//")) sessionStorage.setItem("hop-next", next); } catch (e) { /* ignore */ }
+  location.href = "/login";
 }
 
 async function boot(page, opts) {
   opts = opts || {};
   let me;
   try { me = await api("/api/auth/me", { noRedirect: true }); }
-  catch (e) { location.href = "/login"; return null; }
+  catch (e) { goLogin(); return null; }
   ME.user = me.user; ME.csrf = me.csrf; ME.maxUpload = me.max_upload_mb;
   if (me.user.must_change_password && page !== "account") { location.href = "/account?first=1"; return null; }
   if (opts.admin && me.user.role !== "admin") { location.href = "/"; return null; }

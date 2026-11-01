@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Account · Smart Renamer</title>
+  <title>Account · Hop</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body class="hidden">
   <header id="top"></header>
   <main>
-    <div class="page-head"><div><h1>Account</h1><p class="muted">Your password and the browser button.</p></div></div>
+    <div class="page-head"><div><h1>Account</h1><p class="muted">Your password and the 🐇 button.</p></div></div>
     <div id="first" class="alert warn hidden">Welcome. Please choose your own password before you start.</div>
     <div class="grid-2">
       <form class="card card-pad" id="pwForm" novalidate>
@@ -25,22 +25,27 @@
       </form>
 
       <section class="card card-pad" id="extCard">
-        <h2>Browser button (Chrome / Edge)</h2>
-        <p class="muted small">The button renames every file on the page you are looking at and downloads it. It needs a personal key that links it to your account.</p>
+        <h2>🐇 The Hop button (Chrome / Edge)</h2>
+        <p class="muted small">One click renames every file on the page you're looking at and downloads it. Setting it up takes a minute:</p>
         <ol class="steps small">
-          <li>Install the extension (IT can do this for everyone, or see the README).</li>
-          <li>Click <b>Create key</b> below and copy it. It is shown only once.</li>
-          <li>Open the extension's settings, paste this site's address and the key.</li>
+          <li>Open <span class="mono" id="extUrl">chrome://extensions</span> <button type="button" class="ghost sm" id="copyExt">Copy</button> in a new tab and turn on <b>Developer mode</b> (top right).</li>
+          <li>Click <b>Load unpacked</b> and choose the <span class="mono">extension</span> folder inside your Hop folder.</li>
+          <li>A tab opens asking to connect. Click <b>Allow</b>. Done!</li>
         </ol>
-        <div class="row field">
-          <input type="text" id="tokName" value="My browser" maxlength="80" aria-label="Key name">
-          <button class="primary" id="mkTok">Create key</button>
-        </div>
-        <div id="newTok" class="hidden field">
-          <label>Your new key: copy it now</label>
-          <div class="token-box" id="tokVal"></div>
-          <div class="row"><button class="sm" id="copyTok">Copy</button><span class="muted small">Server address: <span class="mono" id="origin"></span></span></div>
-        </div>
+        <p class="muted small">Then click 🐇 in the toolbar (pin it with the puzzle-piece icon) or press <span class="kbd">Alt+Shift+R</span> on any page with files.</p>
+        <details class="field">
+          <summary class="small muted">Advanced: connect with a key by hand</summary>
+          <div class="row field">
+            <input type="text" id="tokName" value="My browser" maxlength="80" aria-label="Key name">
+            <button class="primary" id="mkTok">Create key</button>
+          </div>
+          <div id="newTok" class="hidden field">
+            <label>Your new key: copy it now</label>
+            <div class="token-box" id="tokVal"></div>
+            <div class="row"><button class="sm" id="copyTok">Copy</button><span class="muted small">Server address: <span class="mono" id="origin"></span></span></div>
+          </div>
+        </details>
+        <h2 class="small muted">Connected browsers</h2>
         <table><thead><tr><th>Key</th><th>Last used</th><th>Expires</th><th></th></tr></thead><tbody id="toks"></tbody></table>
       </section>
     </div>

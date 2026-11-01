@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Admin · Smart Renamer</title>
+  <title>Admin · Hop</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body class="hidden">
   <header id="top"></header>
   <main>
-    <div class="page-head"><div><h1>Admin</h1><p class="muted">People, company list, naming rules and the security log.</p></div></div>
+    <div class="page-head"><div><h1>Admin</h1><p class="muted">People, known sources, naming rules and the security log.</p></div></div>
     <div class="tabs" role="tablist">
       <button class="active" data-tab="users">Users</button>
-      <button data-tab="parties">Customers &amp; suppliers</button>
+      <button data-tab="parties">Known sources</button>
       <button data-tab="settings">Naming rules</button>
       <button data-tab="learning">Corrections</button>
       <button data-tab="audit">Security log</button>
@@ -39,14 +39,14 @@
 
     <section id="tab-parties" class="hidden">
       <div class="card card-pad field">
-        <h2>Import from ERP (CSV)</h2>
-        <p class="muted small">Columns: <span class="mono">code, name, short_name, aliases, domains, kind</span>. Only <span class="mono">name</span> is required. Separate several aliases or email domains with <span class="mono">;</span>. The short name is what appears in file names.</p>
+        <h2>Teach Hop names it should know (optional)</h2>
+        <p class="muted small">Your college, course names, companies you get mail from. Hop then always writes them the same short way. Upload a CSV with columns <span class="mono">name, short_name, aliases, domains</span> (only <span class="mono">name</span> is required; separate several values with <span class="mono">;</span>). Example row: <span class="mono">Vellore Institute of Technology,VIT,VIT University,vit.ac.in</span></p>
         <div class="row"><input type="file" id="csv" accept=".csv,text/csv" aria-label="CSV file"><button class="primary" id="imp">Import</button></div>
       </div>
       <div class="card">
-        <div class="card-pad row"><input type="search" id="pq" placeholder="Search companies" aria-label="Search companies"><span class="muted small" id="pcount"></span></div>
+        <div class="card-pad row"><input type="search" id="pq" placeholder="Search" aria-label="Search known sources"><span class="muted small" id="pcount"></span></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Code</th><th>Name</th><th>In file names</th><th>Email domains</th><th>Type</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>In file names</th><th>Email domains / websites</th><th></th></tr></thead>
           <tbody id="parties"></tbody></table></div>
       </div>
     </section>
@@ -57,8 +57,8 @@
         <div class="field"><label for="tpl">Name pattern</label><input type="text" id="tpl" class="mono" maxlength="80">
           <p class="muted small">Use <span class="kbd">{date}</span> <span class="kbd">{type}</span> <span class="kbd">{party}</span> <span class="kbd">{ref}</span> <span class="kbd">{subject}</span> joined by <span class="kbd">_</span> or <span class="kbd">-</span>. Example: <span class="mono" id="example"></span></p></div>
         <div class="grid-2">
-          <div class="field"><label for="own">Our own company names (never used as the customer)</label><input type="text" id="own" placeholder="Kramski; Kramski India"></div>
-          <div class="field"><label for="dom">Our own email domains</label><input type="text" id="dom" placeholder="kramski.com"></div>
+          <div class="field"><label for="own">Your own names (never used as "From")</label><input type="text" id="own" placeholder="Ravi Kumar; Ravi"></div>
+          <div class="field"><label for="dom">Your own email domains</label><input type="text" id="dom" placeholder="example.com"></div>
           <div class="field"><label for="dord">Dates like 03/04/2026 mean</label><select id="dord"><option value="DMY">3 April 2026 (day first: India, Germany)</option><option value="MDY">March 4 2026 (month first: USA)</option></select></div>
           <div class="field"><label for="thr">Mark as "Ready" when confidence is at least</label><input type="number" id="thr" min="0.5" max="0.99" step="0.01"></div>
         </div>

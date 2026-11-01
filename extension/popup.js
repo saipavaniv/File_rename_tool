@@ -10,23 +10,47 @@ const LABEL = {
   failed: ["Failed", "bad"], access: ["Needs access", "warn"],
 };
 
+const DEFAULT_SERVER = "http://localhost:8000";
+
+function showSetup(msg, hint) {
+  $("main").classList.add("hidden");
+  $("setup").classList.remove("hidden");
+  if (msg) $("setupMsg").textContent = msg;
+  $("setupHint").textContent = hint || "";
+}
+
+async function connect() {
+  const btn = $("connect");
+  btn.disabled = true;
+  btn.textContent = "Connecting…";
+  const r = await send("pair");
+  btn.disabled = false;
+  btn.textContent = "Try again";
+  if (r && r.ok) { window.close(); return; }          // the Allow tab is open now
+  if (r && r.error === "offline") showSetup("Hop isn't running.", "Start it by double-clicking run_local.bat in your Hop folder, wait for the browser to open, then click Try again.");
+  else if (r && r.error === "permission") showSetup("Hop needs permission to reach " + r.server + ".", "Open Settings and click Connect there.");
+  else showSetup("Couldn't connect.", "Make sure Hop is running, then try again.");
+}
+
 (async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   tabId = tab && tab.id;
   const cfg = await chrome.storage.local.get(["server", "token"]);
+  const server = (cfg.server || DEFAULT_SERVER).replace(/\/+$/, "");
   $("settings").onclick = () => chrome.runtime.openOptionsPage();
-  $("openSetup").onclick = () => chrome.runtime.openOptionsPage();
-  $("site").onclick = () => cfg.server && chrome.tabs.create({ url: cfg.server.replace(/\/+$/, "") + "/history" });
+  $("connect").onclick = connect;
+  $("site").onclick = () => chrome.tabs.create({ url: server + "/" });
   $("again").onclick = () => send("rescan");
   $("retry").onclick = () => send("retry");
   chrome.storage.session.onChanged.addListener((changes) => {
     const c = changes["tab:" + tabId];
     if (c) render(c.newValue);
   });
-  if (!cfg.server || !cfg.token || !tabId) { $("setup").classList.remove("hidden"); return; }
+  if (!cfg.token) { showSetup(); return; }
+  if (!tabId) return;
   $("main").classList.remove("hidden");
   const res = await send("scan");   // clicking the icon IS the action: scan, rename, download
-  if (res && res.error === "setup") { $("main").classList.add("hidden"); $("setup").classList.remove("hidden"); return; }
+  if (res && res.error === "setup") { showSetup(); return; }
   const k = "tab:" + tabId;
   render((await chrome.storage.session.get(k))[k]);
 })();
@@ -46,7 +70,7 @@ function render(s) {
   st.replaceChildren();
   if (!items.length) st.textContent = s.running ? "Looking for files…" : "";
   else if (s.running) { st.append("Renaming "); st.append(el("strong", null, finished + " of " + items.length)); st.append(" files…"); }
-  else { st.append(el("strong", null, ok + " of " + items.length)); st.append(" files renamed and saved to Downloads" + (s.tooMany ? " (first 30 only)" : "")); }
+  else { st.append(el("strong", null, ok + " of " + items.length)); st.append(" files renamed and saved to Downloads/Hop" + (s.tooMany ? " (first 30 only)" : "") + (ok ? " 🐇" : "")); }
   $("progress").style.width = items.length ? Math.round((finished / items.length) * 100) + "%" : "0";
   $("retry").classList.toggle("hidden", s.running || !items.some((i) => i.status === "failed" || i.status === "access"));
 
@@ -74,4 +98,5 @@ function render(s) {
     if (it.message && it.status !== "access") li.append(el("div", "msg", it.message));
     return li;
   }));
+  if (items.some((i) => /reconnect/i.test(i.message || ""))) showSetup("Hop needs reconnecting.", "");
 }

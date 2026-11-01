@@ -86,17 +86,15 @@ async function loadParties() {
   try {
     const q = $("#pq").value.trim();
     const r = await api("/api/admin/parties" + (q ? "?q=" + encodeURIComponent(q) : ""));
-    $("#pcount").textContent = r.total + (r.total === 1 ? " company" : " companies");
+    $("#pcount").textContent = r.total + (r.total === 1 ? " name" : " names");
     if (!r.items.length) {
-      $("#parties").replaceChildren(el("tr", {}, [el("td", { colspan: "6", class: "empty", text: "No companies yet. Import a CSV export from the ERP to improve accuracy." })]));
+      $("#parties").replaceChildren(el("tr", {}, [el("td", { colspan: "4", class: "empty", text: "Nothing here yet. This is optional: Hop works without it." })]));
       return;
     }
     $("#parties").replaceChildren(...r.items.map((p) => el("tr", {}, [
-      el("td", { class: "mono small", text: p.code }),
       el("td", {}, [el("div", { text: p.name }), p.aliases ? el("div", { class: "small muted", text: "also: " + p.aliases }) : null]),
       el("td", { class: "mono", text: p.short_name || "(automatic)" }),
       el("td", { class: "small", text: p.domains }),
-      el("td", { class: "small", text: p.kind }),
       el("td", {}, [el("button", { class: "sm danger", text: "Remove", onclick: () => removeParty(p) })]),
     ])));
   } catch (e) { toast(e.message, true); }
@@ -116,7 +114,7 @@ async function importCsv() {
 }
 
 async function removeParty(p) {
-  if (!confirm("Remove " + p.name + " from the list?")) return;
+  if (!confirm("Remove " + p.name + "?")) return;
   try { await api("/api/admin/parties/" + p.id, { method: "DELETE" }); loadParties(); }
   catch (e) { toast(e.message, true); }
 }
@@ -135,7 +133,7 @@ async function loadSettings() {
 }
 
 function example() {
-  const v = { date: "2026-10-28", type: "QUO", party: "Precitool", ref: "PTC-Q-2026-0457", subject: "Progressive-Die-Contact-Spring" };
+  const v = { date: "2026-10-28", type: "ASSIGN", party: "BCSE202L", ref: "Assignment-3", subject: "Linked-Lists-and-Stacks" };
   let n = $("#tpl").value;
   for (const [k, val] of Object.entries(v)) n = n.split("{" + k + "}").join(val);
   $("#example").textContent = n + ".pdf";

@@ -1,9 +1,10 @@
-/* Smart Renamer extension - background worker.
+/* Hop 🐇 extension - background worker.
  * Click -> find files on the page -> read each one (with the page's own login) -> send to the
  * company server for naming -> download the SAME bytes under the new name.
  * Talks only to the server configured in Settings. Nothing runs until the user clicks. */
 "use strict";
 
+const DEFAULT_SERVER = "http://localhost:8000";
 const MAX_FILES = 30;
 const MAX_BYTES = 50 * 1024 * 1024;
 const PARALLEL = 2;
@@ -12,7 +13,7 @@ const PARALLEL = 2;
 
 async function getConfig() {
   const c = await chrome.storage.local.get(["server", "token", "folder"]);
-  return { server: (c.server || "").replace(/\/+$/, ""), token: c.token || "", folder: c.folder ?? "Renamed" };
+  return { server: (c.server || DEFAULT_SERVER).replace(/\/+$/, ""), token: c.token || "", folder: c.folder ?? "Hop" };
 }
 
 // In-memory state per tab (single source of truth, so parallel downloads can't overwrite each
@@ -51,7 +52,7 @@ async function patchItem(tabId, idx, patch) {
 
 /* Runs inside the web page: list file links + light context (title, sender emails). */
 function scanPage() {
-  const EXT = /\.(pdf|docx?|xlsx?|xlsm|xlsb|pptx?|csv|txt|rtf|odt|ods|msg|eml|dxf|dwg|step|stp|igs|iges|stl|zip|7z|rar|png|jpe?g|tiff?|bmp|gif|xml)(?:$|[?#])/i;
+  const EXT = /\.(pdf|docx?|xlsx?|xlsm|xlsb|pptx?|csv|tsv|txt|md|rtf|odt|ods|odp|epub|msg|eml|dxf|dwg|step|stp|igs|iges|stl|zip|7z|rar|tar|gz|tgz|png|jpe?g|webp|tiff?|bmp|gif|svg|xml|json|ya?ml|ipynb|py|java|c|cpp|cc|h|hpp|cs|js|ts|jsx|tsx|go|rs|rb|php|kt|swift|scala|r|m|sql|sh|ino|asm|v|sv|mp4|mp3|wav|mkv)(?:$|[?#])/i;
   const PATTERN = /(attid=|[?&]disp=safe|view=att|\/attachments?\/|\/download(?:$|[/?])|[?&]download=|export=download|getattachment|\/files?\/)/i;
   const out = [], seen = new Set();
   const ct = (document.contentType || "").toLowerCase();
@@ -140,6 +141,10 @@ async function serverCall(cfg, path, init) {
     headers: Object.assign({ Authorization: "Bearer " + cfg.token }, (init && init.headers) || {}) }));
   let body = null;
   try { body = await res.json(); } catch (e) { /* ignore */ }
+  if (res.status === 401) {
+    await chrome.storage.local.remove("token");
+    throw new Error("Hop needs reconnecting: click 🐇 and Connect");
+  }
   if (!res.ok) throw new Error((body && body.detail) || "Server error " + res.status);
   return body;
 }
@@ -222,7 +227,7 @@ async function runQueue(tabId, indices, context, cfg) {
 
 async function startScan(tabId) {
   const cfg = await getConfig();
-  if (!cfg.server || !cfg.token) return { error: "setup" };
+  if (!cfg.token) return { error: "setup" };
   if (!(await chrome.permissions.contains({ origins: [originOf(cfg.server) + "/*"] }))) return { error: "setup" };
   const existing = await getState(tabId);
   if (existing && existing.running) return { ok: true };
@@ -254,6 +259,56 @@ async function retry(tabId, onlyStatus) {
   runQueue(tabId, idx, s.context || {}, cfg);
 }
 
+// ------------------------------------------------------------------ one-click connect (pairing)
+
+function randomCode() {
+  const b = new Uint8Array(32);
+  crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let pairingRun = 0;
+
+async function startPair() {
+  const cfg = await getConfig();
+  const origin = originOf(cfg.server);
+  if (!origin || !(await chrome.permissions.contains({ origins: [origin + "/*"] }))) return { error: "permission", server: cfg.server };
+  try {
+    const h = await fetch(cfg.server + "/api/health", { cache: "no-store" });
+    if (!h.ok) throw new Error();
+  } catch (e) { return { error: "offline", server: cfg.server }; }
+  const code = randomCode();
+  const res = await fetch(cfg.server + "/api/pair/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+  if (!res.ok) return { error: "server", server: cfg.server };
+  const run = ++pairingRun;
+  await chrome.storage.session.set({ pairing: { state: "waiting", at: Date.now() } });
+  await chrome.tabs.create({ url: cfg.server + "/connect#code=" + code });
+  pollPair(code, cfg.server, run);
+  return { ok: true };
+}
+
+async function pollPair(code, server, run) {
+  const until = Date.now() + 5 * 60 * 1000;
+  while (Date.now() < until && run === pairingRun) {
+    await sleep(1500);
+    let r = null;
+    try {
+      const res = await fetch(server + "/api/pair/claim", { method: "POST", cache: "no-store",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      if (res.status === 404) break;
+      r = await res.json();
+    } catch (e) { continue; }
+    await chrome.storage.session.set({ pairing: { state: "waiting", at: Date.now() } });   // also keeps the worker awake
+    if (r && r.status === "ok" && r.token) {
+      await chrome.storage.local.set({ server, token: r.token });
+      await chrome.storage.session.set({ pairing: { state: "done", user: r.user } });
+      return;
+    }
+  }
+  if (run === pairingRun) await chrome.storage.session.set({ pairing: { state: "failed" } });
+}
+
 // ------------------------------------------------------------------ messages from popup / options
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
@@ -261,6 +316,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   (async () => {
     if (msg.cmd === "scan") reply(await startScan(msg.tabId));
     else if (msg.cmd === "rescan") { await clearState(msg.tabId); reply(await startScan(msg.tabId)); }
+    else if (msg.cmd === "pair") reply(await startPair());
     else if (msg.cmd === "retry") { await retry(msg.tabId, msg.statuses || ["failed", "access"]); reply({ ok: true }); }
     else if (msg.cmd === "test") {
       const cfg = await getConfig();
@@ -272,15 +328,16 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
 });
 
 // Right-click a link -> "Rename & download"
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: "smart-rename-link", title: "Rename && download with Smart Renamer", contexts: ["link"] });
-  chrome.storage.local.get(["server"]).then((c) => { if (!c.server) chrome.runtime.openOptionsPage(); });
+chrome.runtime.onInstalled.addListener(async (details) => {
+  chrome.contextMenus.removeAll(() => chrome.contextMenus.create({ id: "smart-rename-link", title: "Rename && download with Hop 🐇", contexts: ["link"] }));
+  const cfg = await getConfig();
+  if (details.reason === "install" && !cfg.token) startPair();   // just installed: open the "Allow" page right away
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "smart-rename-link" || !tab || !info.linkUrl) return;
   const cfg = await getConfig();
-  if (!cfg.server || !cfg.token) { chrome.runtime.openOptionsPage(); return; }
+  if (!cfg.token) { startPair(); return; }
   let context = {};
   try { const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: scanPage }); context = res.result.context; } catch (e) { /* ignore */ }
   const prev = (await getState(tab.id)) || { items: [] };

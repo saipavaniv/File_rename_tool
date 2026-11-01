@@ -1,0 +1,23 @@
+# Render "Blueprint": tells Render how to run Hop.  https://render.com/docs/blueprint-spec
+# Secrets (DATABASE_URL, ADMIN_PASSWORD) are typed into the Render dashboard, never into git.
+# Hop learns its own address from RENDER_EXTERNAL_HOSTNAME, which Render sets automatically.
+services:
+  - type: web
+    name: hop
+    runtime: docker
+    plan: free
+    region: singapore          # closest Render region to India
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL       # paste the Neon connection string
+        sync: false
+      - key: ADMIN_PASSWORD     # your first admin password (12+ chars); remove it after first sign-in
+        sync: false
+      - key: AUDIT_KEY          # seals the audit log; generated once by Render
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUST_PROXY        # Render sits in front of the app and adds X-Forwarded-For
+        value: "true"
+      - key: MAX_UPLOAD_MB
+        value: "25"

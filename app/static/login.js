@@ -12,7 +12,10 @@ $("#form").addEventListener("submit", async (e) => {
   go.disabled = true;
   try {
     const r = await api("/api/auth/login", { method: "POST", json: { username, password }, noRedirect: true });
-    location.href = r.user.must_change_password ? "/account?first=1" : "/";
+    let next = "/";
+    try { next = sessionStorage.getItem("hop-next") || "/"; sessionStorage.removeItem("hop-next"); } catch (e) { /* ignore */ }
+    if (!next.startsWith("/") || next.startsWith("//")) next = "/";
+    location.href = r.user.must_change_password ? "/account?first=1" : next;
   } catch (ex) {
     err.textContent = ex.message;
     err.classList.remove("hidden");

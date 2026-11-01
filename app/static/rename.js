@@ -2,7 +2,7 @@
 /* Rename page: queue -> analyse on server -> review -> download with new name (renamed in the browser). */
 
 const ICON_UP = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>';
-const FIELD_LABELS = { date: "Date", type: "Document type", party: "Customer / supplier", ref: "Reference no.", subject: "Subject" };
+const FIELD_LABELS = { date: "Date", type: "Type", party: "From / course", ref: "Number / ID", subject: "Title" };
 const items = [];
 let META = { types: {} };
 let running = 0;

@@ -10,7 +10,8 @@ from .detect import DANGEROUS_EXT, UnsafeFile, detect_kind
 from .extract import extract
 from .naming import DEFAULT_TEMPLATE, choose_ext, compose
 
-WEIGHTS = {"type": 0.3, "date": 0.25, "party": 0.25, "ref": 0.1, "subject": 0.1}
+WEIGHTS = {"type": 0.35, "date": 0.25, "subject": 0.2, "party": 0.1, "ref": 0.1}
+OPTIONAL = ("party", "ref")   # often legitimately absent (e.g. a code file has no sender)
 
 
 def prepare_parties(rows: list[dict]) -> list[dict]:
@@ -34,8 +35,8 @@ def prepare_parties(rows: list[dict]) -> list[dict]:
 def analyse(data: bytes, filename: str, context: dict | None = None, config: dict | None = None) -> dict:
     ctx = context or {}
     cfg = dict(config or {})
-    cfg.setdefault("own_names", ["kramski"])
-    cfg.setdefault("own_domains", ["kramski.com"])
+    cfg.setdefault("own_names", [])
+    cfg.setdefault("own_domains", [])
     cfg.setdefault("date_order", "DMY")
     cfg.setdefault("template", DEFAULT_TEMPLATE)
     cfg.setdefault("auto_threshold", 0.75)
@@ -59,20 +60,26 @@ def analyse(data: bytes, filename: str, context: dict | None = None, config: dic
         return result
 
     ex = extract(data, kind)
-    f_type = F.find_type(ex, ctx, cfg, stem)
+    ctx = dict(ctx, _stem=stem)
+    f_type = F.find_type(ex, ctx, cfg, stem, orig_ext)
     f_date = F.find_date(ex, ctx, cfg)
-    f_ref = F.find_ref(ex, ctx, cfg, f_type.value)
+    f_ref = F.find_ref(ex, ctx, cfg, f_type.value, stem)
     f_party = F.find_party(ex, ctx, cfg, f_type.value)
     used = [v for v in (f_party.value, f_ref.value) if v] + list(cfg.get("own_names", []))
-    f_subj = F.find_subject(ex, ctx, cfg, stem, used)
+    f_subj = F.find_subject(ex, ctx, cfg, stem, used, f_type.value)
 
     fields = {"date": f_date, "type": f_type, "party": f_party, "ref": f_ref, "subject": f_subj}
     ext = choose_ext(kind, filename)
     name = compose({k: v.value for k, v in fields.items()}, cfg["template"], ext)
 
-    conf = sum(WEIGHTS[k] * (fields[k].confidence if fields[k].value else (0.5 if k in ("ref", "subject") else 0))
-               for k in WEIGHTS)
-    status = "auto" if (conf >= cfg["auto_threshold"] and f_date.confidence >= 0.6
+    num = den = 0.0
+    for k, w in WEIGHTS.items():
+        if not fields[k].value and k in OPTIONAL:
+            continue
+        num += w * (fields[k].confidence if fields[k].value else 0.3)
+        den += w
+    conf = num / den
+    status = "auto" if (conf >= cfg["auto_threshold"] and f_date.confidence >= 0.5
                         and f_type.value not in ("DOC",)) else "review"
     result.update({
         "kind": kind, "ext": ext, "status": status, "confidence": round(conf, 2),

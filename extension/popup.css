@@ -32,3 +32,7 @@ footer .sp { flex: 1; }
 .access { margin: 6px 14px; padding: 9px 10px; border-radius: 8px; background: var(--warn-weak); color: var(--warn); font-size: 12.5px; }
 .access button { margin-top: 6px; }
 .hidden { display: none !important; }
+.bunny { font-size: 20px; line-height: 1; }
+.big-bunny { font-size: 46px; line-height: 1; margin-bottom: 8px; }
+button.big { padding: 9px 26px; font-size: 14px; margin-top: 4px; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 10px; }

@@ -1,10 +1,10 @@
 @echo off
 REM ============================================================
-REM  Smart Renamer - run on THIS computer only (demo / testing)
+REM  Hop - run on THIS computer only (demo / testing)
 REM  Double-click this file. First run takes a few minutes.
 REM ============================================================
 cd /d "%~dp0"
-title Smart Renamer
+title Hop - keep this window open
 
 where python >nul 2>nul
 if errorlevel 1 (
@@ -38,7 +38,7 @@ if not exist data\renamer.db (
   echo Creating the admin account and loading sample data...
   python -m app.cli create-admin --username admin --password "Smart-Rename-2026!" || goto :err
   python scripts\make_samples.py samples || goto :err
-  python -m app.cli import-parties samples\parties.csv || goto :err
+  python -m app.cli import-parties samples\sources.csv || goto :err
   echo.
   echo  ==========================================
   echo   Sign in with:  admin  /  Smart-Rename-2026!
@@ -48,7 +48,7 @@ if not exist data\renamer.db (
 )
 
 echo Starting... the browser will open at http://localhost:8000
-echo Keep this window open while you use Smart Renamer. Close it to stop.
+echo Keep this window open while you use Hop. Close it to stop.
 start "" cmd /c "timeout /t 6 >nul & start http://localhost:8000"
 python run.py
 goto :eof

@@ -1,70 +1,840 @@
 {
-  "_comment": "Document-type rules. Each keyword is a case-insensitive phrase (English + German). weight = how strongly it signals the type. Keywords found in the document title/header count 3x. Admins can edit this file without touching code.",
+  "_comment": "Document-type rules. Each keyword is a case-insensitive phrase. weight = how strongly it signals the type. Keywords in the title/top of the document count 3x. Edit freely: no code changes needed.",
   "doc_types": [
-    {"code": "RFQ",  "label": "Request for quotation", "keywords": {"request for quotation": 6, "request for quote": 6, "rfq": 5, "enquiry": 4, "inquiry": 3, "anfrage": 5, "angebotsanfrage": 6, "preisanfrage": 6}},
-    {"code": "QUO",  "label": "Quotation / offer", "keywords": {"quotation": 5, "quotation no": 4, "quote no": 4, "offer no": 4, "our offer": 3, "price offer": 4, "commercial offer": 4, "techno-commercial offer": 5, "validity": 1, "valid until": 2, "valid for": 1, "angebot": 5, "angebotsnummer": 5, "angebots-nr": 5, "gültig bis": 2, "unit price": 1, "total price": 1}},
-    {"code": "PO",   "label": "Purchase order", "keywords": {"purchase order": 7, "po no": 4, "po number": 4, "p.o. no": 4, "order no": 2, "bestellung": 6, "bestellnummer": 5, "bestell-nr": 5, "einkaufsbestellung": 7, "please supply": 3, "delivery schedule": 1}},
-    {"code": "OC",   "label": "Order confirmation", "keywords": {"order confirmation": 8, "order acknowledgement": 8, "order acknowledgment": 8, "auftragsbestätigung": 8, "bestellbestätigung": 8, "we confirm your order": 6}},
-    {"code": "PI",   "label": "Proforma invoice", "keywords": {"proforma invoice": 10, "pro forma invoice": 10, "pro-forma invoice": 10, "proforma": 6, "proformarechnung": 10}},
-    {"code": "INV",  "label": "Invoice", "keywords": {"invoice": 5, "tax invoice": 7, "invoice no": 5, "invoice number": 5, "gst invoice": 7, "commercial invoice": 6, "rechnung": 6, "rechnungsnummer": 6, "rechnungs-nr": 6, "amount due": 2, "total amount payable": 2, "hsn": 1, "cgst": 1, "sgst": 1, "igst": 1}},
-    {"code": "CN",   "label": "Credit / debit note", "keywords": {"credit note": 8, "debit note": 8, "gutschrift": 8, "belastungsanzeige": 8}},
-    {"code": "PAY",  "label": "Payment advice", "keywords": {"payment advice": 8, "remittance advice": 8, "zahlungsavis": 8, "payment confirmation": 6, "statement of account": 6, "kontoauszug": 5}},
-    {"code": "DN",   "label": "Delivery note / challan", "keywords": {"delivery note": 7, "delivery challan": 8, "challan no": 6, "packing list": 6, "packing slip": 6, "lieferschein": 8, "e-way bill": 5, "dispatch details": 3}},
-    {"code": "DRW",  "label": "Drawing", "keywords": {"drawing no": 6, "drawing number": 6, "dwg no": 6, "zeichnung": 5, "zeichnungsnummer": 6, "zeichnungs-nr": 6, "general tolerances": 4, "allgemeintoleranzen": 4, "iso 2768": 4, "din iso 2768": 4, "scale": 1, "maßstab": 2, "massstab": 2, "third angle projection": 4, "first angle projection": 4, "drawn by": 2, "gezeichnet": 2, "sheet": 1, "blatt": 1}},
-    {"code": "SPEC", "label": "Specification / datasheet", "keywords": {"specification": 4, "technical specification": 6, "datasheet": 5, "data sheet": 5, "lastenheft": 7, "pflichtenheft": 7, "requirements": 2, "werknorm": 5}},
-    {"code": "PPAP", "label": "PPAP documents", "keywords": {"ppap": 7, "part submission warrant": 9, "psw": 4, "production part approval": 9, "ppf": 3, "produktionsprozess- und produktfreigabe": 9}},
-    {"code": "ISIR", "label": "Initial sample report", "keywords": {"initial sample": 7, "initial sample inspection report": 9, "isir": 7, "erstmuster": 7, "erstmusterprüfbericht": 9, "empb": 7, "first article inspection": 8, "fai report": 7}},
-    {"code": "FMEA", "label": "FMEA", "keywords": {"fmea": 8, "failure mode and effects": 9, "failure mode": 4, "rpn": 3, "severity": 1, "occurrence": 1, "detection": 1}},
-    {"code": "CP",   "label": "Control plan", "keywords": {"control plan": 8, "produktionslenkungsplan": 9, "prüfplan": 5, "reaction plan": 4}},
-    {"code": "8D",   "label": "8D / complaint", "keywords": {"8d report": 9, "8d-report": 9, "8d": 3, "8-d": 3, "root cause": 4, "containment action": 5, "corrective action": 4, "complaint no": 5, "customer complaint": 6, "reklamation": 6, "reklamationsnummer": 6, "beanstandung": 5}},
-    {"code": "TR",   "label": "Test / inspection report", "keywords": {"test report": 7, "inspection report": 7, "measurement report": 7, "dimensional report": 7, "prüfbericht": 7, "messprotokoll": 7, "messbericht": 7, "cmm report": 7, "test result": 3, "cpk": 2, "capability study": 5}},
-    {"code": "CERT", "label": "Certificate", "keywords": {"certificate": 5, "certificate of conformity": 8, "certificate of compliance": 8, "material certificate": 8, "mill test certificate": 8, "inspection certificate": 7, "en 10204": 6, "3.1": 1, "zertifikat": 6, "werkszeugnis": 8, "abnahmeprüfzeugnis": 8, "iatf 16949": 3, "iso 9001": 2, "rohs": 3, "reach": 2}},
-    {"code": "NDA",  "label": "NDA", "keywords": {"non-disclosure agreement": 10, "non disclosure agreement": 10, "confidentiality agreement": 9, "geheimhaltungsvereinbarung": 10, "nda": 4}},
-    {"code": "AGR",  "label": "Agreement / contract", "keywords": {"agreement": 4, "contract": 4, "terms and conditions": 3, "vertrag": 5, "rahmenvertrag": 7, "supply agreement": 7, "quality agreement": 7, "qualitätssicherungsvereinbarung": 8}},
-    {"code": "MOM",  "label": "Minutes of meeting", "keywords": {"minutes of meeting": 9, "minutes of the meeting": 9, "mom": 3, "meeting minutes": 9, "besprechungsprotokoll": 9, "protokoll": 4, "action items": 3, "attendees": 3, "teilnehmer": 3}},
-    {"code": "SCHED","label": "Delivery schedule / forecast", "keywords": {"delivery schedule": 7, "forecast": 4, "call-off": 6, "lieferabruf": 8, "abruf": 4, "schedule agreement": 6}},
-    {"code": "PL",   "label": "Price list", "keywords": {"price list": 8, "preisliste": 8, "rate card": 6}}
+    {
+      "code": "PAPER",
+      "label": "Research paper",
+      "keywords": {
+        "abstract": 4,
+        "introduction": 2,
+        "related work": 5,
+        "references": 3,
+        "bibliography": 3,
+        "arxiv": 6,
+        "doi": 2,
+        "proceedings": 5,
+        "conference": 2,
+        "journal": 2,
+        "ieee": 2,
+        "acm": 2,
+        "springer": 2,
+        "elsevier": 2,
+        "et al": 3,
+        "conclusion": 1,
+        "methodology": 2,
+        "experiments": 1,
+        "keywords": 2,
+        "index terms": 4,
+        "preprint": 5
+      }
+    },
+    {
+      "code": "SLIDES",
+      "label": "Lecture slides",
+      "keywords": {
+        "lecture": 5,
+        "slides": 5,
+        "slide": 2,
+        "week": 2,
+        "module": 2,
+        "unit": 1,
+        "outline": 2,
+        "agenda": 2,
+        "today's topics": 5,
+        "recap": 3,
+        "learning objectives": 4,
+        "questions?": 3,
+        "thank you": 1
+      }
+    },
+    {
+      "code": "NOTES",
+      "label": "Notes",
+      "keywords": {
+        "notes": 5,
+        "lecture notes": 8,
+        "class notes": 8,
+        "study notes": 8,
+        "cheat sheet": 8,
+        "summary": 2,
+        "revision": 3,
+        "handout": 6
+      }
+    },
+    {
+      "code": "ASSIGN",
+      "label": "Assignment / homework",
+      "keywords": {
+        "assignment": 7,
+        "homework": 7,
+        "problem set": 8,
+        "due date": 4,
+        "due:": 3,
+        "submission": 3,
+        "submit": 2,
+        "deadline": 3,
+        "marks": 1,
+        "points": 1,
+        "question 1": 2,
+        "q1": 1,
+        "digital assignment": 8,
+        "da-": 2
+      }
+    },
+    {
+      "code": "LAB",
+      "label": "Lab / practical",
+      "keywords": {
+        "lab": 4,
+        "laboratory": 5,
+        "lab manual": 8,
+        "lab record": 8,
+        "experiment": 5,
+        "experiment no": 7,
+        "aim": 3,
+        "apparatus": 5,
+        "procedure": 3,
+        "observation": 3,
+        "result": 1,
+        "practical": 5,
+        "viva": 4
+      }
+    },
+    {
+      "code": "EXAM",
+      "label": "Exam / question paper",
+      "keywords": {
+        "question paper": 9,
+        "examination": 6,
+        "exam": 4,
+        "end semester": 7,
+        "mid semester": 7,
+        "midterm": 7,
+        "final exam": 8,
+        "cat-1": 6,
+        "cat-2": 6,
+        "fat": 3,
+        "quiz": 5,
+        "max marks": 6,
+        "maximum marks": 6,
+        "time: 3 hours": 6,
+        "duration": 1,
+        "answer all questions": 7,
+        "answer any": 5,
+        "part a": 3,
+        "part b": 2,
+        "model paper": 7,
+        "previous year": 6
+      }
+    },
+    {
+      "code": "SYLL",
+      "label": "Syllabus / course plan",
+      "keywords": {
+        "syllabus": 9,
+        "course outcomes": 7,
+        "course objectives": 7,
+        "course plan": 8,
+        "credits": 2,
+        "prerequisite": 4,
+        "text books": 4,
+        "textbooks": 3,
+        "reference books": 4,
+        "l t p c": 6,
+        "course code": 3,
+        "evaluation scheme": 6,
+        "lesson plan": 8
+      }
+    },
+    {
+      "code": "REPORT",
+      "label": "Report / project report",
+      "keywords": {
+        "project report": 9,
+        "report": 3,
+        "submitted by": 6,
+        "under the guidance": 7,
+        "acknowledgement": 5,
+        "acknowledgment": 5,
+        "declaration": 3,
+        "bonafide certificate": 5,
+        "table of contents": 2,
+        "list of figures": 4,
+        "in partial fulfillment": 8,
+        "internship report": 9,
+        "case study": 5
+      }
+    },
+    {
+      "code": "BOOK",
+      "label": "Book / e-book",
+      "keywords": {
+        "isbn": 8,
+        "edition": 4,
+        "chapter": 2,
+        "preface": 6,
+        "table of contents": 2,
+        "all rights reserved": 4,
+        "publisher": 3,
+        "foreword": 5,
+        "copyright ©": 3
+      }
+    },
+    {
+      "code": "RESUME",
+      "label": "Resume / CV",
+      "keywords": {
+        "resume": 8,
+        "résumé": 8,
+        "curriculum vitae": 9,
+        "cv": 3,
+        "education": 2,
+        "skills": 2,
+        "technical skills": 5,
+        "projects": 2,
+        "work experience": 4,
+        "internships": 3,
+        "linkedin": 4,
+        "github": 2,
+        "cgpa": 2,
+        "achievements": 2,
+        "objective": 2,
+        "hobbies": 3
+      }
+    },
+    {
+      "code": "CERT",
+      "label": "Certificate",
+      "keywords": {
+        "certificate": 6,
+        "certificate of completion": 9,
+        "certificate of participation": 9,
+        "certificate of achievement": 9,
+        "certify that": 7,
+        "certifies that": 7,
+        "has successfully completed": 8,
+        "successfully completed": 5,
+        "awarded to": 6,
+        "presented to": 5,
+        "credential id": 6,
+        "verify at": 4,
+        "in recognition": 5
+      }
+    },
+    {
+      "code": "MARKS",
+      "label": "Grade card / transcript",
+      "keywords": {
+        "grade card": 9,
+        "grade sheet": 9,
+        "marksheet": 9,
+        "mark sheet": 9,
+        "transcript": 8,
+        "cgpa": 4,
+        "sgpa": 5,
+        "gpa": 3,
+        "semester result": 7,
+        "statement of marks": 9,
+        "credits earned": 6
+      }
+    },
+    {
+      "code": "OFFER",
+      "label": "Offer / internship letter",
+      "keywords": {
+        "offer letter": 9,
+        "letter of offer": 9,
+        "internship offer": 9,
+        "we are pleased to offer": 8,
+        "pleased to inform": 3,
+        "date of joining": 6,
+        "joining date": 6,
+        "stipend": 6,
+        "ctc": 5,
+        "compensation": 3,
+        "appointment letter": 9
+      }
+    },
+    {
+      "code": "LETTER",
+      "label": "Letter",
+      "keywords": {
+        "letter of recommendation": 9,
+        "recommendation letter": 9,
+        "lor": 4,
+        "statement of purpose": 9,
+        "sop": 3,
+        "cover letter": 9,
+        "bonafide": 6,
+        "no objection certificate": 9,
+        "noc": 4,
+        "to whom it may concern": 6,
+        "yours sincerely": 3,
+        "yours faithfully": 3,
+        "dear sir": 2
+      }
+    },
+    {
+      "code": "FORM",
+      "label": "Form / application",
+      "keywords": {
+        "application form": 9,
+        "registration form": 9,
+        "form": 2,
+        "signature of the applicant": 7,
+        "signature of applicant": 7,
+        "fill in": 3,
+        "applicant name": 5,
+        "declaration by": 4
+      }
+    },
+    {
+      "code": "RCPT",
+      "label": "Receipt / payment",
+      "keywords": {
+        "receipt": 7,
+        "payment receipt": 9,
+        "fee receipt": 9,
+        "payment successful": 8,
+        "transaction id": 6,
+        "txn id": 6,
+        "amount paid": 6,
+        "paid": 2,
+        "order id": 4,
+        "order summary": 6,
+        "upi": 3,
+        "payment id": 6,
+        "thank you for your order": 7,
+        "thank you for your purchase": 7
+      }
+    },
+    {
+      "code": "INV",
+      "label": "Invoice / bill",
+      "keywords": {
+        "invoice": 6,
+        "tax invoice": 8,
+        "invoice no": 6,
+        "invoice number": 6,
+        "bill": 3,
+        "bill no": 5,
+        "amount due": 4,
+        "total amount payable": 4,
+        "gst": 1,
+        "rechnung": 6
+      }
+    },
+    {
+      "code": "QUO",
+      "label": "Quotation",
+      "keywords": {
+        "quotation": 6,
+        "quote no": 5,
+        "estimate": 4,
+        "proforma": 4,
+        "valid until": 2,
+        "angebot": 5
+      }
+    },
+    {
+      "code": "PO",
+      "label": "Purchase order",
+      "keywords": {
+        "purchase order": 8,
+        "po number": 5,
+        "po no": 5,
+        "bestellung": 6
+      }
+    },
+    {
+      "code": "TICKET",
+      "label": "Ticket / booking",
+      "keywords": {
+        "e-ticket": 9,
+        "eticket": 8,
+        "ticket": 5,
+        "boarding pass": 9,
+        "pnr": 7,
+        "booking id": 6,
+        "booking confirmation": 8,
+        "irctc": 7,
+        "flight": 3,
+        "train": 2,
+        "seat": 2,
+        "departure": 3,
+        "arrival": 2,
+        "passenger": 4,
+        "gate": 1,
+        "venue": 2,
+        "admit one": 7
+      }
+    },
+    {
+      "code": "STMT",
+      "label": "Bank / account statement",
+      "keywords": {
+        "statement of account": 9,
+        "account statement": 9,
+        "bank statement": 9,
+        "opening balance": 6,
+        "closing balance": 6,
+        "available balance": 4,
+        "ifsc": 3,
+        "withdrawal": 2,
+        "deposit": 1
+      }
+    },
+    {
+      "code": "AGR",
+      "label": "Agreement / contract",
+      "keywords": {
+        "agreement": 5,
+        "contract": 5,
+        "terms and conditions": 3,
+        "non-disclosure": 8,
+        "rental agreement": 9,
+        "lease": 5,
+        "hereinafter": 6,
+        "witnesseth": 7
+      }
+    },
+    {
+      "code": "MOM",
+      "label": "Meeting notes",
+      "keywords": {
+        "minutes of meeting": 9,
+        "minutes of the meeting": 9,
+        "meeting minutes": 9,
+        "action items": 4,
+        "attendees": 4,
+        "mom": 3
+      }
+    },
+    {
+      "code": "GUIDE",
+      "label": "Manual / guide",
+      "keywords": {
+        "user manual": 9,
+        "user guide": 9,
+        "installation guide": 9,
+        "getting started": 5,
+        "tutorial": 5,
+        "how to": 2,
+        "step 1": 3,
+        "readme": 6,
+        "documentation": 4,
+        "quick start": 6
+      }
+    }
   ],
-
   "kind_defaults": {
-    "dxf": {"code": "DRW", "score": 8},
-    "dwg": {"code": "DRW", "score": 8},
-    "step": {"code": "CAD", "score": 8},
-    "iges": {"code": "CAD", "score": 8},
-    "msg": {"code": "MAIL", "score": 3},
-    "eml": {"code": "MAIL", "score": 3}
+    "msg": {
+      "code": "MAIL",
+      "score": 3
+    },
+    "eml": {
+      "code": "MAIL",
+      "score": 3
+    },
+    "pptx": {
+      "code": "SLIDES",
+      "score": 2
+    },
+    "ppt": {
+      "code": "SLIDES",
+      "score": 2
+    },
+    "dxf": {
+      "code": "DRW",
+      "score": 8
+    },
+    "dwg": {
+      "code": "DRW",
+      "score": 8
+    },
+    "step": {
+      "code": "CAD",
+      "score": 8
+    },
+    "iges": {
+      "code": "CAD",
+      "score": 8
+    },
+    "ipynb": {
+      "code": "NB",
+      "score": 8
+    },
+    "csv": {
+      "code": "DATA",
+      "score": 3
+    }
   },
-  "extra_type_labels": {"CAD": "3D CAD model", "MAIL": "Email", "DOC": "Document (type unknown)", "IMG": "Image / photo"},
-
+  "extra_type_labels": {
+    "CAD": "3D model",
+    "DRW": "Drawing",
+    "MAIL": "Email",
+    "NB": "Jupyter notebook",
+    "CODE": "Source code",
+    "DATA": "Dataset / table",
+    "DOC": "Document (type unknown)",
+    "IMG": "Image / photo",
+    "SHOT": "Screenshot",
+    "ZIP": "Archive"
+  },
   "reference_labels": {
-    "QUO":  ["quotation\\s*(?:no|number|nr|#|ref)", "quote\\s*(?:no|number|#)", "offer\\s*(?:no|number|#)", "angebots?\\s*-?\\s*(?:nr|nummer)", "angebotsnummer"],
-    "RFQ":  ["rfq\\s*(?:no|number|#)?", "enquiry\\s*(?:no|number|ref)", "inquiry\\s*(?:no|number|ref)", "anfrage\\s*-?\\s*(?:nr|nummer)"],
-    "PO":   ["purchase\\s*order\\s*(?:no|number|nr|#)?", "p\\.?\\s*o\\.?\\s*(?:no|number|#)", "order\\s*(?:no|number|#)", "bestell\\s*-?\\s*(?:nr|nummer)", "bestellnummer", "your\\s*order"],
-    "OC":   ["order\\s*confirmation\\s*(?:no|number|#)?", "confirmation\\s*(?:no|number|#)", "auftrags\\s*-?\\s*(?:nr|nummer)", "auftragsbestätigung\\s*(?:nr)?", "order\\s*(?:no|number|#)"],
-    "INV":  ["invoice\\s*(?:no|number|nr|#)", "inv\\.?\\s*(?:no|#)", "bill\\s*(?:no|number|#)", "rechnungs\\s*-?\\s*(?:nr|nummer)", "rechnungsnummer"],
-    "PI":   ["proforma\\s*invoice\\s*(?:no|number|#)?", "pi\\s*(?:no|number|#)", "invoice\\s*(?:no|number|#)"],
-    "CN":   ["credit\\s*note\\s*(?:no|number|#)?", "debit\\s*note\\s*(?:no|number|#)?", "gutschrift\\s*-?\\s*(?:nr|nummer)?"],
-    "DN":   ["delivery\\s*(?:note|challan)\\s*(?:no|number|#)", "challan\\s*(?:no|number|#)", "lieferschein\\s*-?\\s*(?:nr|nummer)?", "packing\\s*list\\s*(?:no|#)"],
-    "DRW":  ["drawing\\s*(?:no|number|nr|#)", "dwg\\.?\\s*(?:no|#)", "zeichnungs\\s*-?\\s*(?:nr|nummer)", "zeichnungsnummer", "part\\s*(?:no|number|#)", "teile\\s*-?\\s*(?:nr|nummer)", "sachnummer", "material\\s*(?:no|number)"],
-    "8D":   ["8d\\s*(?:no|number|#)", "complaint\\s*(?:no|number|#)", "reklamations\\s*-?\\s*(?:nr|nummer)", "claim\\s*(?:no|number|#)"],
-    "TR":   ["report\\s*(?:no|number|#)", "prüfbericht\\s*-?\\s*(?:nr)?", "test\\s*(?:no|number)"],
-    "CERT": ["certificate\\s*(?:no|number|#)", "zertifikat\\s*-?\\s*(?:nr|nummer)?", "cert\\.?\\s*(?:no|#)"],
-    "ANY":  ["document\\s*(?:no|number|#)", "doc\\.?\\s*(?:no|#)", "our\\s*ref(?:erence)?", "ref(?:erence)?\\s*(?:no|number|#)", "beleg\\s*-?\\s*(?:nr|nummer)", "part\\s*(?:no|number|#)", "drawing\\s*(?:no|number|#)", "article\\s*(?:no|number|#)", "artikel\\s*-?\\s*(?:nr|nummer)"]
+    "INV": [
+      "invoice\\s*(?:no|number|nr|#)",
+      "inv\\.?\\s*(?:no|#)",
+      "bill\\s*(?:no|number|#)",
+      "rechnungs\\s*-?\\s*(?:nr|nummer)"
+    ],
+    "RCPT": [
+      "receipt\\s*(?:no|number|#)",
+      "transaction\\s*(?:id|no|number)",
+      "txn\\s*(?:id|no)",
+      "order\\s*(?:id|no|number|#)",
+      "payment\\s*(?:id|ref(?:erence)?)",
+      "reference\\s*(?:no|number|id)",
+      "utr"
+    ],
+    "TICKET": [
+      "pnr\\s*(?:no|number)?",
+      "booking\\s*(?:id|no|ref(?:erence)?)",
+      "ticket\\s*(?:no|number|id)",
+      "confirmation\\s*(?:no|number|code)"
+    ],
+    "QUO": [
+      "quotation\\s*(?:no|number|#)",
+      "quote\\s*(?:no|number|#)",
+      "estimate\\s*(?:no|#)"
+    ],
+    "PO": [
+      "purchase\\s*order\\s*(?:no|number|#)?",
+      "p\\.?\\s*o\\.?\\s*(?:no|number|#)",
+      "order\\s*(?:no|number|#)"
+    ],
+    "CERT": [
+      "certificate\\s*(?:no|number|id|#)",
+      "credential\\s*(?:id|url)",
+      "cert\\.?\\s*(?:no|id|#)",
+      "verification\\s*(?:code|id)"
+    ],
+    "OFFER": [
+      "ref(?:erence)?\\s*(?:no|number|#)",
+      "offer\\s*(?:no|id)"
+    ],
+    "STMT": [
+      "account\\s*(?:no|number)"
+    ],
+    "DRW": [
+      "drawing\\s*(?:no|number|#)",
+      "dwg\\.?\\s*(?:no|#)",
+      "part\\s*(?:no|number|#)"
+    ],
+    "ANY": [
+      "document\\s*(?:no|number|#)",
+      "doc\\.?\\s*(?:no|#)",
+      "ref(?:erence)?\\s*(?:no|number|#)",
+      "our\\s*ref"
+    ]
   },
-
-  "date_labels_good": ["date", "dated", "datum", "issue date", "document date", "quotation date", "offer date", "order date", "po date", "invoice date", "bill date", "angebotsdatum", "bestelldatum", "rechnungsdatum", "ausstellungsdatum", "erstellt am", "created", "drawn", "report date", "sent", "gesendet"],
-  "date_labels_bad": ["valid until", "valid till", "validity", "gültig bis", "delivery date", "required by", "due date", "fällig", "liefertermin", "lieferdatum", "expiry", "expires", "expiration", "date of birth", "payment terms", "zahlungsziel", "deadline", "dispatch by", "eta"],
-
-  "generic_filename_patterns": ["^document\\s*\\d*$", "^doc\\d*$", "^untitled", "^unbenannt", "^new\\s", "^neu", "^scan", "^img[_\\-]?\\d", "^image\\d*", "^dsc[_\\-]?\\d", "^photo", "^download", "^attachment", "^anhang", "^file\\d*$", "^datei", "^\\d+$", "^[a-f0-9\\-]{16,}$", "^mail$", "^print", "^copy", "^kopie", "^book\\d*$", "^mappe\\d*$", "^sheet\\d*$", "^presentation\\d*$", "^präsentation"],
-
-  "subject_labels": ["subject", "betreff", "re", "title", "titel", "description", "beschreibung", "part name", "part description", "benennung", "bezeichnung", "item", "project", "projekt", "material", "werkstoff"],
-
-  "party_labels_to": ["to", "an", "customer", "kunde", "bill to", "billed to", "ship to", "consignee", "buyer", "käufer", "sold to", "client", "attention", "attn", "kind attn", "m/s", "messrs"],
-  "party_labels_from": ["from", "von", "supplier", "vendor", "lieferant", "seller", "verkäufer", "manufacturer", "hersteller"],
-
-  "legal_suffixes": ["GmbH & Co\\. KG", "GmbH & Co KG", "GmbH", "AG", "KG", "KGaA", "SE", "e\\.K\\.", "Pvt\\.? Ltd\\.?", "Private Limited", "Ltd\\.?", "Limited", "LLP", "Inc\\.?", "Incorporated", "LLC", "Corp\\.?", "Corporation", "Co\\.,? Ltd\\.?", "S\\.A\\.", "S\\.p\\.A\\.", "S\\.r\\.l\\.", "s\\.r\\.o\\.", "B\\.V\\.", "N\\.V\\.", "SAS", "SARL", "Oy", "AB", "Sp\\. z o\\.o\\.", "Kft\\.?", "Industries", "Enterprises"],
-
-  "free_email_domains": ["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "rediffmail.com", "icloud.com", "gmx.de", "gmx.net", "web.de", "t-online.de", "aol.com", "proton.me", "protonmail.com", "zoho.com"],
-
-  "subject_stopwords": ["the", "a", "an", "and", "or", "of", "for", "to", "in", "on", "with", "by", "from", "our", "your", "please", "find", "attached", "attachment", "regarding", "reg", "ref", "re", "fw", "fwd", "aw", "wg", "der", "das", "den", "dem", "und", "oder", "für", "von", "mit", "zu", "im", "am", "ihr", "ihre", "unser", "unsere", "anbei", "bitte", "betreff", "no", "nr", "dated", "dt", "page", "seite", "copy", "kind", "dear", "sir", "madam", "hello", "hi", "pdf", "docx", "xlsx", "kramski"]
+  "sequence_words": {
+    "assignment": "Assignment",
+    "homework": "HW",
+    "hw": "HW",
+    "problem set": "PS",
+    "lab": "Lab",
+    "experiment": "Exp",
+    "exp": "Exp",
+    "lecture": "Lecture",
+    "lec": "Lecture",
+    "week": "Week",
+    "unit": "Unit",
+    "module": "Module",
+    "chapter": "Ch",
+    "ch": "Ch",
+    "tutorial": "Tutorial",
+    "tut": "Tutorial",
+    "quiz": "Quiz",
+    "worksheet": "Worksheet",
+    "sheet": "Sheet",
+    "part": "Part",
+    "session": "Session",
+    "class": "Class",
+    "da": "DA",
+    "cat": "CAT",
+    "practical": "Practical",
+    "project": "Project",
+    "phase": "Phase",
+    "review": "Review"
+  },
+  "date_labels_good": [
+    "date",
+    "dated",
+    "datum",
+    "issue date",
+    "issued on",
+    "date of issue",
+    "document date",
+    "invoice date",
+    "bill date",
+    "order date",
+    "transaction date",
+    "payment date",
+    "paid on",
+    "date of exam",
+    "exam date",
+    "date of journey",
+    "journey date",
+    "travel date",
+    "date of submission",
+    "submitted on",
+    "date of joining",
+    "joining date",
+    "created",
+    "published",
+    "sent",
+    "generated on",
+    "printed on"
+  ],
+  "date_labels_bad": [
+    "valid until",
+    "valid till",
+    "validity",
+    "due date",
+    "due on",
+    "due:",
+    "deadline",
+    "expiry",
+    "expires",
+    "expiration",
+    "date of birth",
+    "dob",
+    "d.o.b",
+    "born",
+    "last date",
+    "before",
+    "renewal"
+  ],
+  "generic_filename_patterns": [
+    "^document\\s*\\d*$",
+    "^doc\\d*$",
+    "^untitled",
+    "^new\\s",
+    "^scan",
+    "^img[_\\-]?\\d",
+    "^image\\d*",
+    "^dsc[_\\-]?\\d",
+    "^photo",
+    "^download",
+    "^attachment",
+    "^file\\d*$",
+    "^\\d+$",
+    "^[a-f0-9\\-]{16,}$",
+    "^mail$",
+    "^print",
+    "^copy",
+    "^book\\d*$",
+    "^sheet\\d*$",
+    "^presentation\\d*$",
+    "^screenshot",
+    "^screen shot",
+    "^whatsapp",
+    "^capture",
+    "^unnamed",
+    "^output",
+    "^export",
+    "^pdf$",
+    "^\\d{4}[\\-_]?\\d{2}[\\-_]?\\d{2}",
+    "^[a-z0-9]{1,4}$",
+    "^main$",
+    "^index$",
+    "^final",
+    "^ans",
+    "^answer",
+    "^solution$",
+    "^notes?$",
+    "^test\\d*$",
+    "^lecture\\s*\\d*$",
+    "^lab\\s*\\d*$",
+    "^assignment\\s*\\d*$",
+    "^chapter\\s*\\d*$",
+    "^slides?\\s*\\d*$",
+    "^[a-z]{1,6}[_\\-\\s]?\\d{1,3}[a-z]?$",
+    "^receipt[_\\-]?\\d*$",
+    "^ticket[_\\-]?\\d*$",
+    "^certificate[_\\-]?\\d*$",
+    "^invoice[_\\-]?\\d*$",
+    "^qp\\d*$",
+    "^resume",
+    "^cv[_\\-]?"
+  ],
+  "subject_labels": [
+    "subject",
+    "re",
+    "title",
+    "topic",
+    "description",
+    "project title",
+    "course title",
+    "course name",
+    "course",
+    "aim",
+    "objective",
+    "event",
+    "program",
+    "programme",
+    "item"
+  ],
+  "party_labels_to": [
+    "to",
+    "customer",
+    "bill to",
+    "billed to",
+    "ship to",
+    "buyer",
+    "sold to",
+    "client",
+    "attention",
+    "attn",
+    "m/s",
+    "messrs",
+    "issued to",
+    "awarded to",
+    "presented to"
+  ],
+  "party_labels_from": [
+    "from",
+    "supplier",
+    "vendor",
+    "seller",
+    "issued by",
+    "organised by",
+    "organized by",
+    "conducted by",
+    "offered by",
+    "sold by",
+    "merchant",
+    "institute",
+    "university",
+    "college",
+    "school",
+    "company",
+    "organization",
+    "organisation"
+  ],
+  "legal_suffixes": [
+    "GmbH & Co\\. KG",
+    "GmbH",
+    "AG",
+    "Pvt\\.? Ltd\\.?",
+    "Private Limited",
+    "Ltd\\.?",
+    "Limited",
+    "LLP",
+    "Inc\\.?",
+    "Incorporated",
+    "LLC",
+    "Corp\\.?",
+    "Corporation",
+    "Co\\.,? Ltd\\.?",
+    "S\\.A\\.",
+    "B\\.V\\.",
+    "Technologies",
+    "Solutions",
+    "Labs",
+    "Foundation"
+  ],
+  "free_email_domains": [
+    "gmail.com",
+    "googlemail.com",
+    "yahoo.com",
+    "yahoo.co.in",
+    "outlook.com",
+    "hotmail.com",
+    "live.com",
+    "rediffmail.com",
+    "icloud.com",
+    "gmx.de",
+    "web.de",
+    "aol.com",
+    "proton.me",
+    "protonmail.com",
+    "zoho.com"
+  ],
+  "generic_hosts": [
+    "mail.google.com",
+    "outlook.live.com",
+    "outlook.office.com",
+    "outlook.office365.com",
+    "drive.google.com",
+    "docs.google.com",
+    "web.whatsapp.com",
+    "teams.microsoft.com",
+    "localhost",
+    "127.0.0.1",
+    "onedrive.live.com",
+    "dropbox.com",
+    "www.dropbox.com",
+    "wetransfer.com",
+    "github.com",
+    "raw.githubusercontent.com",
+    "www.google.com",
+    "google.com"
+  ],
+  "subject_stopwords": [
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "of",
+    "for",
+    "to",
+    "in",
+    "on",
+    "with",
+    "by",
+    "from",
+    "our",
+    "your",
+    "please",
+    "find",
+    "attached",
+    "attachment",
+    "regarding",
+    "reg",
+    "ref",
+    "re",
+    "fw",
+    "fwd",
+    "aw",
+    "wg",
+    "no",
+    "nr",
+    "dated",
+    "dt",
+    "page",
+    "copy",
+    "kind",
+    "dear",
+    "sir",
+    "madam",
+    "hello",
+    "hi",
+    "pdf",
+    "docx",
+    "xlsx",
+    "pptx",
+    "final",
+    "v1",
+    "v2",
+    "new",
+    "updated",
+    "download",
+    "file",
+    "document",
+    "certify",
+    "certifies"
+  ]
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TMP = tempfile.mkdtemp()
-os.environ.update({"DATA_DIR": TMP, "DATABASE_URL": f"sqlite:///{TMP}/t.db", "COOKIE_SECURE": "false",
+os.environ.update({"DATA_DIR": TMP, "DATABASE_URL": os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{TMP}/t.db", "COOKIE_SECURE": "false",
                    "ALLOWED_HOSTS": "testserver,localhost", "LOGIN_MAX_FAILS": "3", "ANALYSIS_WORKERS": "1"})
 sys.path.insert(0, str(ROOT))
 
@@ -22,7 +22,7 @@ ADMIN_PW = "Very-Secure-Pass-2026"
 
 @pytest.fixture(scope="module")
 def client():
-    if not (SAMPLES / "Document1.pdf").exists():
+    if not (SAMPLES / "DA3.pdf").exists():
         import subprocess
         subprocess.run([sys.executable, str(ROOT / "scripts" / "make_samples.py"), str(SAMPLES)], check=True)
     create_admin("admin", ADMIN_PW)
@@ -51,7 +51,8 @@ def test_security_headers(client):
 
 
 def test_bad_host_rejected(client):
-    assert client.get("/api/health", headers={"host": "evil.example"}).status_code == 400
+    assert client.get("/api/health", headers={"host": "internal-check"}).status_code == 200   # platform health checks pass
+    assert client.get("/api/files", headers={"host": "evil.example"}).status_code == 400
 
 
 def test_login_and_csrf(client):
@@ -78,17 +79,16 @@ def _csrf(client):
 def test_analyze_and_finalize(client):
     login(client)
     h = {"x-csrf-token": _csrf(client)}
-    with open(SAMPLES / "Document1.pdf", "rb") as f:
-        r = client.post("/api/analyze", files={"file": ("Document1.pdf", f, "application/pdf")}, headers=h)
+    with open(SAMPLES / "DA3.pdf", "rb") as f:
+        r = client.post("/api/analyze", files={"file": ("DA3.pdf", f, "application/pdf")}, headers=h)
     assert r.status_code == 200, r.text
     j = r.json()
-    assert j["suggested_name"].startswith("2026-10-28_QUO_")
-    assert j["fields"]["ref"]["value"] == "PTC/Q/2026/0457"
+    assert j["suggested_name"].startswith("2026-10-28_ASSIGN_BCSE202L_Assignment-3")
     # user edits the name; extension can't be changed to something dangerous
     r = client.post(f"/api/files/{j['id']}/finalize", json={"final_name": "../../evil name.exe"}, headers=h)
     assert r.status_code == 200
     assert r.json()["final_name"] == "evil-name-exe.pdf"
-    r = client.get("/api/files?q=PTC")
+    r = client.get("/api/files?q=BCSE202L")
     assert r.json()["total"] >= 1
 
 
@@ -205,12 +205,12 @@ def test_parties_and_audit_chain(client):
     client.cookies.clear()
     login(client)
     h = {"x-csrf-token": _csrf(client)}
-    with open(SAMPLES / "parties.csv", "rb") as f:
+    with open(SAMPLES / "sources.csv", "rb") as f:
         r = client.post("/api/admin/parties/import", files={"file": ("p.csv", f)}, headers=h)
-    assert r.json()["added"] == 3
-    with open(SAMPLES / "Document2.docx", "rb") as f:
-        r = client.post("/api/analyze", files={"file": ("Document2.docx", f)}, headers=h)
-    assert "_PO_Lumen-Auto_4500098123_" in r.json()["suggested_name"]
+    assert r.json()["added"] == 2
+    with open(SAMPLES / "mail.eml", "rb") as f:
+        r = client.post("/api/analyze", files={"file": ("mail.eml", f)}, headers=h)
+    assert "_MAIL_VIT_" in r.json()["suggested_name"]
     assert client.get("/api/admin/audit/verify").json()["ok"] is True
     # tamper with the log directly in the database -> verification must fail
     from app.db import SessionLocal
@@ -226,9 +226,43 @@ def test_parties_and_audit_chain(client):
 def test_settings_validation(client):
     login(client)
     h = {"x-csrf-token": _csrf(client)}
-    bad = {"own_names": ["Kramski"], "own_domains": ["kramski.com"], "template": "{date}<script>", "date_order": "DMY", "auto_threshold": 0.8}
+    bad = {"own_names": ["Ravi"], "own_domains": ["example.com"], "template": "{date}<script>", "date_order": "DMY", "auto_threshold": 0.8}
     assert client.put("/api/admin/settings", json=bad, headers=h).status_code == 400
-    good = dict(bad, template="{date}_{party}_{type}_{ref}")
+    good = dict(bad, own_names=[], own_domains=[], template="{date}_{party}_{type}_{ref}")
     assert client.put("/api/admin/settings", json=good, headers=h).status_code == 200
     r = client.post("/api/compose", json={"fields": {"date": "2026-01-01", "type": "QUO", "party": "X"}}, headers=h)
     assert r.json()["name"] == "2026-01-01_X_QUO"
+
+
+def test_pairing_one_click(client):
+    import secrets
+    from app.security import limiter
+    limiter._hits.clear()
+    client.cookies.clear()
+    code = secrets.token_urlsafe(32)
+    assert client.post("/api/pair/start", json={"code": code}).status_code == 200
+    assert client.post("/api/pair/claim", json={"code": code}).json()["status"] == "pending"
+    # approving needs a signed-in session + CSRF
+    assert client.post("/api/pair/approve", json={"code": code}).status_code == 401
+    r = login(client)
+    h = {"x-csrf-token": r.json()["csrf"]}
+    assert client.post("/api/pair/approve", json={"code": code}, headers=h).status_code == 200
+    client.cookies.clear()
+    j = client.post("/api/pair/claim", json={"code": code}).json()
+    assert j["status"] == "ok" and j["token"].startswith("krn_")
+    # handed out only once
+    assert client.post("/api/pair/claim", json={"code": code}).status_code == 404
+    assert client.get("/api/auth/me", headers={"authorization": "Bearer " + j["token"]}).status_code == 200
+
+
+def test_pairing_rejects_other_computer(client):
+    import secrets
+    from app.api import pair
+    code = secrets.token_urlsafe(32)
+    client.post("/api/pair/start", json={"code": code})
+    pair._pending[pair._h(code)]["ip"] = "10.6.6.6"      # started on someone else's machine
+    r = login(client)
+    h = {"x-csrf-token": r.json()["csrf"]}
+    assert client.post("/api/pair/approve", json={"code": code}, headers=h).status_code == 403
+    assert client.post("/api/pair/claim", json={"code": code}).status_code == 404
+    assert client.post("/api/pair/approve", json={"code": "short"}, headers=h).status_code == 422

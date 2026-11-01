@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Connect the button · Hop</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="hidden">
+  <header id="top"></header>
+  <main>
+    <div class="card card-pad connect-card">
+      <div class="connect-bunny" aria-hidden="true">🐇</div>
+      <div id="ask">
+        <h1>Connect the Hop button?</h1>
+        <p class="muted">This lets the 🐇 button in your browser rename and download files using your account.</p>
+        <p class="muted small">Only click Allow if you just clicked <b>Connect</b> in the Hop button yourself.</p>
+        <div class="row connect-actions">
+          <button class="primary" id="allow">Allow</button>
+          <a class="btn" href="/">Cancel</a>
+        </div>
+      </div>
+      <div id="done" class="hidden">
+        <h1>All set! 🎉</h1>
+        <p class="muted">The Hop button is connected. You can close this tab.</p>
+        <p class="muted small">Next time, open any page with files and click 🐇 (or press <span class="kbd">Alt+Shift+R</span>).</p>
+      </div>
+      <div id="bad" class="hidden">
+        <h1>This link didn't work</h1>
+        <p class="muted" id="badMsg">Open the Hop button and click Connect again.</p>
+      </div>
+    </div>
+  </main>
+  <script src="/static/common.js"></script>
+  <script src="/static/connect.js"></script>
+</body>
+</html>

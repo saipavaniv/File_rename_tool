@@ -130,7 +130,7 @@ def put_settings(body: SettingsIn, request: Request, p: Principal = Depends(admi
     names = [n.strip()[:80] for n in body.own_names if n.strip()]
     domains = [d.strip().lower().lstrip("@")[:120] for d in body.own_domains if d.strip()]
     if any(not re.fullmatch(r"[a-z0-9.\-]+\.[a-z]{2,}", d) for d in domains):
-        raise HTTPException(400, "Each own domain must look like kramski.com")
+        raise HTTPException(400, "Each own domain must look like example.com")
     vals = {"own_names": names, "own_domains": domains, "template": body.template,
             "date_order": body.date_order, "auto_threshold": round(body.auto_threshold, 2)}
     store.save_settings(db, vals)

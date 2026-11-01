@@ -1,8 +1,9 @@
-"""Generate realistic sample files (fictional companies) to test the naming engine.
+"""Generate realistic sample files (made-up people and courses) to try Hop on.
 
 Usage:  python scripts/make_samples.py  [output_dir]
 """
 import io
+import json
 import os
 import sys
 import zipfile
@@ -16,144 +17,174 @@ def p(name):
     return os.path.join(OUT, name)
 
 
-def quotation_pdf():
+def pdf(name, lines, title_meta=""):
+    """lines: (text, size, bold) top to bottom."""
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
-    c = canvas.Canvas(p("Document1.pdf"), pagesize=A4)
-    c.setTitle("")
+    c = canvas.Canvas(p(name), pagesize=A4)
+    c.setTitle(title_meta)
     y = 800
-    def line(t, size=10, bold=False, dy=16):
-        nonlocal y
+    for text, size, bold in lines:
         c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
-        c.drawString(50, y, t)
-        y -= dy
-    line("PRECITOOL Components Pvt. Ltd.", 14, True, 18)
-    line("No. 14, Industrial Estate, Ambattur, Chennai 600058  |  GSTIN 33AABCP1234Q1Z5")
-    line("Tel +91 44 2625 1100  |  sales@precitool.in", dy=30)
-    line("QUOTATION", 16, True, 26)
-    line("Quotation No: PTC/Q/2026/0457")
-    line("Date: 28.10.2026")
-    line("Valid until: 30.11.2026", dy=24)
-    line("To:")
-    line("KRAMSKI India Pvt. Ltd.")
-    line("SIPCOT Industrial Complex, Vellore, Tamil Nadu", dy=24)
-    line("Subject: Progressive die for contact spring KR-5520", bold=True, dy=24)
-    line("Dear Sir, with reference to your enquiry dated 15.10.2026 we are pleased to offer:")
-    line("1. Progressive stamping die, 12 stations, carbide punches      INR 18,40,000")
-    line("2. Trial run and sample submission (50 pcs)                     INR   65,000")
-    line("Payment terms: 40% advance, balance before dispatch. Delivery date: 15.01.2027", dy=24)
-    line("For PRECITOOL Components Pvt. Ltd.")
+        c.drawString(50, y, text)
+        y -= size + 9
     c.save()
 
 
-def po_docx():
+def paper():
+    pdf("1706.03762v5.pdf", [
+        ("arXiv:1706.03762v5 [cs.CL] 6 Dec 2017", 8, False),
+        ("Attention Is All You Need", 20, True),
+        ("Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit", 10, False),
+        ("Google Brain", 10, False),
+        ("Abstract", 12, True),
+        ("The dominant sequence transduction models are based on complex recurrent or convolutional", 10, False),
+        ("neural networks. We propose a new simple network architecture, the Transformer.", 10, False),
+        ("1 Introduction", 12, True),
+        ("Recurrent neural networks have been firmly established as state of the art approaches.", 10, False),
+        ("2 Related Work", 12, True),
+        ("References", 12, True),
+        ("[1] Jimmy Lei Ba et al. Layer normalization. arXiv preprint, 2016.", 9, False),
+    ])
+
+
+def assignment():
+    pdf("DA3.pdf", [
+        ("Vellore Institute of Technology", 11, False),
+        ("School of Computer Science and Engineering", 10, False),
+        ("Course Code: BCSE202L   Data Structures and Algorithms", 10, False),
+        ("Digital Assignment 3", 13, True),
+        ("Linked Lists and Stacks", 18, True),
+        ("Date: 28.10.2026        Due date: 15.11.2026", 10, False),
+        ("Q1. Implement a singly linked list with insert and delete operations. (10 marks)", 10, False),
+        ("Q2. Use a stack to check balanced parentheses. (10 marks)", 10, False),
+        ("Submit the code and output screenshots on the portal before the deadline.", 10, False),
+    ])
+
+
+def exam():
+    pdf("QP.pdf", [
+        ("VELLORE INSTITUTE OF TECHNOLOGY", 12, True),
+        ("End Semester Examination - Fall Semester 2025-26", 11, False),
+        ("Course Code: MAT2002     Course Title: Applications of Differential and Difference Equations", 9, False),
+        ("Date of Exam: 19.11.2025      Time: 3 Hours      Max Marks: 100", 10, False),
+        ("Answer ALL questions", 10, True),
+        ("PART A (10 x 3 = 30 marks)", 10, False),
+        ("1. Solve the differential equation y'' + 4y = sin 2x.", 10, False),
+    ])
+
+
+def certificate():
+    pdf("certificate.pdf", [
+        ("Coursera", 12, False),
+        ("CERTIFICATE OF COMPLETION", 22, True),
+        ("This is to certify that", 11, False),
+        ("Ravi Kumar", 18, True),
+        ("has successfully completed", 11, False),
+        ("Machine Learning Specialization", 15, True),
+        ("an online non-credit course authorized by Stanford University and DeepLearning.AI", 9, False),
+        ("Date: September 12, 2026", 10, False),
+        ("Credential ID: 8XK2QPL7M4ZA      Verify at coursera.org/verify/8XK2QPL7M4ZA", 9, False),
+    ])
+
+
+def receipt():
+    pdf("receipt_1730284112.pdf", [
+        ("Spotify", 16, True),
+        ("Payment Receipt", 13, True),
+        ("Payment successful", 10, False),
+        ("Date: 30 Oct 2026", 10, False),
+        ("Transaction ID: T2610301198745", 10, False),
+        ("Order ID: SP-77812-IN", 10, False),
+        ("Spotify Premium Student - 1 month", 10, False),
+        ("Amount paid: Rs 59.00 via UPI", 10, False),
+    ])
+
+
+def ticket():
+    pdf("ticket.pdf", [
+        ("IRCTC  Electronic Reservation Slip (ERS)", 12, True),
+        ("E-Ticket", 11, False),
+        ("PNR: 4521367890     Train: 12639 Brindavan Express", 10, False),
+        ("From: MAS Chennai Central   To: KPD Katpadi Jn", 10, False),
+        ("Date of Journey: 12-Nov-2026   Departure: 07:50", 10, False),
+        ("Passenger: Ravi Kumar  Age 20  Seat: D4 / 32", 10, False),
+        ("Booking Date: 30-Oct-2026", 9, False),
+    ])
+
+
+def slides():
+    from pptx import Presentation
+    prs = Presentation()
+    s = prs.slides.add_slide(prs.slide_layouts[0])
+    s.shapes.title.text = "Lecture 7: Dynamic Programming"
+    s.placeholders[1].text = "CS 301 - Design and Analysis of Algorithms\nOctober 2026"
+    s2 = prs.slides.add_slide(prs.slide_layouts[1])
+    s2.shapes.title.text = "Today's topics"
+    s2.placeholders[1].text = "Recap of greedy algorithms\nMemoization vs tabulation\nKnapsack problem"
+    prs.core_properties.title = ""
+    prs.save(p("lec07.pptx"))
+
+
+def lab():
     import docx
     d = docx.Document()
-    d.sections[0].header.paragraphs[0].text = "Lumen Automotive Systems GmbH · Industriestraße 7 · 75179 Pforzheim"
-    d.add_heading("Bestellung", 0)
-    t = d.add_table(rows=3, cols=2)
-    for i, (a, b) in enumerate([("Bestellnummer", "4500098123"), ("Datum", "14.10.2026"), ("Lieferant", "KRAMSKI GmbH")]):
-        t.cell(i, 0).text, t.cell(i, 1).text = a, b
-    d.add_paragraph("Betreff: Steckverbinder Gehäuse 12-polig, Serienlieferung")
-    d.add_paragraph("Sehr geehrte Damen und Herren, bitte liefern Sie gemäß Ihrem Angebot Nr. KR-A-2026-311:")
-    d.add_paragraph("Pos 10: Gehäuse 12-polig, Sachnummer 7781-2210, 50.000 Stück, Liefertermin 30.11.2026")
-    d.core_properties.title = ""
-    d.save(p("Document2.docx"))
+    d.add_paragraph("CSE3001 Computer Networks Lab")
+    d.add_heading("Experiment No. 5", 1)
+    d.add_paragraph("Date: 21/10/2026")
+    d.add_paragraph("Aim: To implement a client-server chat using TCP sockets")
+    d.add_paragraph("Procedure: 1. Create a server socket. 2. Bind and listen. 3. Accept the client connection.")
+    d.add_paragraph("Result: The TCP chat application was implemented and the output was verified.")
+    d.save(p("Document1.docx"))
 
 
-def invoice_xlsx():
-    import datetime as dt
-    import openpyxl
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Invoice"
-    rows = [["Sri Balaji Metals Pvt Ltd"], ["Katpadi Road, Vellore 632007"], [], ["TAX INVOICE"],
-            ["Invoice No", "SBM/2026-27/1189"], ["Invoice Date", dt.datetime(2026, 10, 21)],
-            ["Bill To", "Kramski India Pvt. Ltd., Vellore"], [],
-            ["Description", "HSN", "Qty (kg)", "Rate", "Amount"],
-            ["CuSn6 strip 0.3 x 42 mm", "7409", 850, 912, 775200],
-            ["", "", "", "CGST 9%", 69768], ["", "", "", "SGST 9%", 69768],
-            ["", "", "", "Total amount payable", 914736]]
-    for r in rows:
-        ws.append(r)
-    wb.save(p("Book1.xlsx"))
+def resume():
+    import docx
+    d = docx.Document()
+    d.add_heading("RAVI KUMAR", 0)
+    d.add_paragraph("ravi.kumar@example.com | linkedin.com/in/ravikumar | github.com/ravik")
+    d.add_heading("Education", 1)
+    d.add_paragraph("B.Tech Computer Science, Vellore Institute of Technology - CGPA 8.9")
+    d.add_heading("Technical Skills", 1)
+    d.add_paragraph("Python, Java, C++, SQL, React")
+    d.add_heading("Projects", 1)
+    d.add_paragraph("Hop - smart file renamer (Python, FastAPI)")
+    d.save(p("resume_final_v2.docx"))
 
 
-def complaint_eml():
+def code():
+    with open(p("main.py"), "w") as f:
+        f.write('"""Dijkstra shortest path on a weighted graph."""\nimport heapq\n\n\ndef dijkstra(graph, src):\n'
+                '    dist = {v: float("inf") for v in graph}\n    dist[src] = 0\n    pq = [(0, src)]\n    return dist\n')
+
+
+def notebook():
+    nb = {"cells": [
+        {"cell_type": "markdown", "metadata": {}, "source": ["# Linear Regression from Scratch\n", "Gradient descent on a toy dataset."]},
+        {"cell_type": "code", "metadata": {}, "execution_count": 1, "outputs": [], "source": ["import numpy as np\n", "X = np.random.rand(100, 1)"]},
+    ], "metadata": {"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"}},
+        "nbformat": 4, "nbformat_minor": 5}
+    with open(p("Untitled.ipynb"), "w") as f:
+        json.dump(nb, f, indent=1)
+
+
+def screenshot():
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (800, 450), (250, 250, 250))
+    ImageDraw.Draw(im).rectangle([40, 40, 760, 410], outline=(30, 30, 30), width=3)
+    im.save(p("Screenshot 2026-10-30 142233.png"))
+
+
+def mail():
     m = EmailMessage()
-    m["From"] = "Anna Schmidt <anna.schmidt@lumen-auto.de>"
-    m["To"] = "quality@kramski.com"
-    m["Subject"] = "AW: 8D Report complaint 77812 - contact pin deformation"
-    m["Date"] = "Tue, 27 Oct 2026 09:14:03 +0100"
-    m["Message-ID"] = "<abc123@lumen-auto.de>"
-    m.set_content("Hello team,\n\nplease find attached our updated 8D report for complaint no. 77812.\n"
-                  "Containment action must be confirmed by Friday.\n\nBest regards\nAnna Schmidt\n"
-                  "Lumen Automotive Systems GmbH\nQuality Management")
-    m.add_attachment(b"%PDF-1.4 fake", maintype="application", subtype="pdf", filename="8D_77812.pdf")
+    m["From"] = "Prof. Anita Rao <anita.rao@vit.ac.in>"
+    m["To"] = "ravi.kumar@example.com"
+    m["Subject"] = "Re: Project review 2 schedule - BCSE306L"
+    m["Date"] = "Tue, 27 Oct 2026 09:14:03 +0530"
+    m["Message-ID"] = "<abc123@vit.ac.in>"
+    m.set_content("Hi Ravi,\n\nYour project review 2 is on 4 November at 10 am in SJT 512.\n\nRegards\nAnita Rao")
     with open(p("mail.eml"), "wb") as f:
         f.write(bytes(m))
-
-
-def drawing_dxf():
-    import ezdxf
-    doc = ezdxf.new("R2018")
-    msp = doc.modelspace()
-    msp.add_lwpolyline([(0, 0), (40, 0), (40, 12), (0, 12)], close=True)
-    blk = doc.blocks.new(name="TITLEBLOCK")
-    for i, tag in enumerate(["DWG_NO", "TITLE", "REV", "DATE", "CUSTOMER", "SCALE"]):
-        blk.add_attdef(tag, (0, -i * 5), dxfattribs={"height": 2.5})
-    ins = msp.add_blockref("TITLEBLOCK", (100, 50))
-    ins.add_auto_attribs({"DWG_NO": "KR-4711-02", "TITLE": "Contact spring 0.64 mm", "REV": "C",
-                          "DATE": "15.09.2026", "CUSTOMER": "Lumen Automotive", "SCALE": "5:1"})
-    msp.add_text("GENERAL TOLERANCES ISO 2768-mK", dxfattribs={"height": 2}).set_placement((100, 10))
-    doc.saveas(p("export.dxf"))
-
-
-def model_step():
-    s = """ISO-10303-21;
-HEADER;
-FILE_DESCRIPTION(('CATIA V5 STEP Exchange'),'2;1');
-FILE_NAME('C:\\\\Temp\\\\Part1.stp','2026-10-02T11:20:44',('rkumar'),('Lumen Automotive Systems'),'ST-DEVELOPER v18','CATIA Version 5 Release 2023','none');
-FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 3 1 1 }'));
-ENDSEC;
-DATA;
-#1=PRODUCT('7781-2210','Housing 12-pole connector','',(#2));
-ENDSEC;
-END-ISO-10303-21;
-"""
-    with open(p("Part1.stp"), "w") as f:
-        f.write(s)
-
-
-def scanned_certificate():
-    from PIL import Image, ImageDraw, ImageFont
-    im = Image.new("L", (1654, 2339), 255)  # A4 @ 200 dpi
-    dr = ImageDraw.Draw(im)
-    try:
-        font_b = ImageFont.truetype("DejaVuSans-Bold.ttf", 46)
-        font = ImageFont.truetype("DejaVuSans.ttf", 34)
-    except OSError:
-        font_b = font = ImageFont.load_default()
-    y = 140
-    for t, f in [("Wieland Werke AG", font_b), ("Graf-Arco-Strasse 36, 89079 Ulm, Germany", font),
-                 ("", font), ("MATERIAL TEST CERTIFICATE", font_b), ("Inspection certificate EN 10204 3.1", font),
-                 ("", font), ("Certificate No: MTC-88231", font), ("Date: 02.10.2026", font),
-                 ("Customer: KRAMSKI India Pvt. Ltd.", font), ("Material: CuSn6 R420, strip 0.30 x 42.0 mm", font),
-                 ("Heat No: 51123", font), ("Tensile strength 452 MPa   Hardness 141 HV", font)]:
-        dr.text((140, y), t, fill=0, font=f)
-        y += 70
-    im.save(p("scan_0034.pdf"), "PDF", resolution=200)
-
-
-def minutes_docx():
-    import docx
-    d = docx.Document()
-    d.add_heading("Minutes of Meeting", 0)
-    d.add_paragraph("Date: 22 October 2026")
-    d.add_paragraph("Attendees: R. Kumar, S. Iyer, Anna Schmidt (Lumen Automotive Systems GmbH)")
-    d.add_paragraph("Subject: PPAP timeline for housing 12-pole")
-    d.add_paragraph("Action items: submit PSW by 10.11.2026; capability study on cavity 4.")
-    d.save(p("Document3.docx"))
 
 
 def zip_bomb():
@@ -165,12 +196,11 @@ def zip_bomb():
 
 
 if __name__ == "__main__":
-    for fn in (quotation_pdf, po_docx, invoice_xlsx, complaint_eml, drawing_dxf, model_step,
-               scanned_certificate, minutes_docx, zip_bomb):
+    for fn in (paper, assignment, exam, certificate, receipt, ticket, slides, lab, resume, code, notebook,
+               screenshot, mail, zip_bomb):
         fn()
-    with open(p("parties.csv"), "w") as f:
-        f.write("code,name,short_name,aliases,domains,kind\n"
-                "C1001,Lumen Automotive Systems GmbH,Lumen-Auto,Lumen Automotive;LAS,lumen-auto.de,customer\n"
-                "S2001,Precitool Components Pvt. Ltd.,Precitool,,precitool.in,supplier\n"
-                "S2002,Wieland-Werke AG,Wieland,Wieland Werke,wieland.com,supplier\n")
+    with open(p("sources.csv"), "w") as f:
+        f.write("name,short_name,aliases,domains\n"
+                "Vellore Institute of Technology,VIT,VIT University,vit.ac.in;vitstudent.ac.in\n"
+                "Coursera Inc,Coursera,,coursera.org\n")
     print("samples written to", os.path.abspath(OUT))

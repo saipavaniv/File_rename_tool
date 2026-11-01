@@ -3,7 +3,7 @@
 Every field is chosen by scoring candidates with transparent rules:
   * where it was found (title/header beats body text),
   * what label sits next to it ("Invoice No:", "Datum:", "Customer:"),
-  * whether it matches Kramski's own master data (customers/suppliers),
+  * whether it matches your list of known sources (courses, colleges, companies),
   * the email around the file (sender, subject, date).
 Each result carries the evidence, so the UI can show *why* a name was chosen.
 """
@@ -109,6 +109,7 @@ _MON = "|".join(sorted((re.escape(m) for m in _MONTHS), key=len, reverse=True))
 RE_ISO = re.compile(r"(?<![\d\w])((?:19|20)\d{2})[-/.](\d{1,2})[-/.](\d{1,2})(?![\d])")
 RE_NUM = re.compile(r"(?<![\d\w.])(\d{1,2})([./-])(\d{1,2})\2(\d{4}|\d{2})(?![\d])")
 RE_DMY = re.compile(r"(?<![\w])(\d{1,2})(?:st|nd|rd|th)?\.?[\s\-]+(" + _MON + r")\.?[\s\-,]+((?:19|20)\d{2})(?![\d])", re.I)
+RE_MONTH_YEAR = re.compile(r"(?<![\w\d])(" + _MON + r")\.?,?\s+((?:19|20)\d{2})(?![\d])", re.I)
 RE_MDY = re.compile(r"(?<![\w])(" + _MON + r")\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+((?:19|20)\d{2})(?![\d])", re.I)
 
 
@@ -186,13 +187,29 @@ def find_date(ex: Extracted, ctx: dict, cfg: dict) -> Field:
             cands.append(Cand(d, score, why))
             seen_lines += 1
         prev = ln
+    stem = ctx.get("_stem", "")
+    for d, _s, _e in find_dates_in(stem.replace("_", " "), cfg.get("date_order", "DMY")):
+        if d <= today + dt.timedelta(days=1):
+            cands.append(Cand(d, 2.5, "date in the file name"))
+    m = re.search(r"(?<!\d)((?:19|20)\d{2})(\d{2})(\d{2})(?!\d)", stem)
+    if m:
+        try:
+            d = dt.date(*map(int, m.groups()))
+            if d <= today + dt.timedelta(days=1):
+                cands.append(Cand(d, 2.5, "date in the file name"))
+        except ValueError:
+            pass
+    for m in RE_MONTH_YEAR.finditer(ex.header[:3000]):
+        y, mo = int(m.group(2)), _MONTHS[m.group(1).lower()]
+        if 1995 <= y <= today.year + 1:
+            cands.append(Cand(dt.date(y, mo, 1), 1.6, f'"{m.group(0)}" at the top (month only)'))
     for d, src in ex.meta_dates:
         if dt.date(1995, 1, 1) <= d <= today + dt.timedelta(days=1):
             cands.append(Cand(d, 0.9, src))
 
     best, ranked = _best([c for c in cands if c.score > 0])
     if not best:
-        return Field(today.isoformat(), 0.15, "no date found; today's date used")
+        return Field(today.isoformat(), 0.55, "no date in the file, so today's date (download date)")
     runner = next((c.score for c in ranked[1:] if c.value != best.value), None)
     conf = _conf(best.score, runner, 4.5)
     if best.source in ("PDF creation date", "Word file created", "Excel file created", "file created",
@@ -220,10 +237,19 @@ def type_labels() -> dict:
     return d
 
 
-def find_type(ex: Extracted, ctx: dict, cfg: dict, stem: str) -> Field:
+def find_type(ex: Extracted, ctx: dict, cfg: dict, stem: str, ext: str = "") -> Field:
+    from .detect import CODE_EXT
     r = rules()
     if ex.kind in ("msg", "eml"):
         return Field("MAIL", 0.95, "file is an email message")
+    if ex.kind == "ipynb":
+        return Field("NB", 0.95, "Jupyter notebook file")
+    if ext in CODE_EXT and ex.kind in ("txt", "html", "xml", "unknown"):
+        return Field("CODE", 0.92, f"{ext} source code file")
+    if ex.kind in ("zip", "7z", "rar"):
+        return Field("ZIP", 0.9, "archive file")
+    if ex.kind in ("png", "jpg", "gif", "bmp", "tif") and re.search(r"(?i)screen\s*shot|screenshot|capture|snip", stem):
+        return Field("SHOT", 0.9, "screenshot (from the file name)")
 
     header = ex.header
     body = ex.text[:400_000]
@@ -305,12 +331,47 @@ def _valid_ref(v: str) -> bool:
     return True
 
 
-def find_ref(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
+STUDY_TYPES = {"ASSIGN", "LAB", "SLIDES", "NOTES", "EXAM", "SYLL", "REPORT", "BOOK", "NB", "CODE", "DOC"}
+RE_ARXIV = re.compile(r"arXiv\s*:\s*(\d{4}\.\d{4,5})(v\d+)?", re.I)
+RE_DOI = re.compile(r"\b(10\.\d{4,9}/[^\s\"<>,;]{3,60})")
+
+
+@lru_cache(maxsize=1)
+def _seq_re():
+    words = sorted(rules()["sequence_words"], key=len, reverse=True)
+    return re.compile(r"(?<![\w])(" + "|".join(re.escape(w) for w in words) +
+                      r")\s*[-_#:.]?\s*(?:no\.?\s*)?(\d{1,2})(?![\d.])", re.I)
+
+
+def find_sequence(texts: list[tuple[str, float, str]]) -> list[Cand]:
+    """'Assignment 3', 'Lab-05', 'Week 2', 'Lecture7' -> 'Assignment-3'."""
+    out = []
+    names = rules()["sequence_words"]
+    for text, score, where in texts:
+        for m in _seq_re().finditer(text or ""):
+            label = names[m.group(1).lower()]
+            out.append(Cand(f"{label}-{int(m.group(2))}", score, f'"{m.group(0).strip()}" in {where}'))
+    return out
+
+
+def find_ref(ex: Extracted, ctx: dict, cfg: dict, doc_type: str, stem: str = "") -> Field:
     pats = _ref_patterns()
     header, hset, body = _lines(ex)
     cands: list[Cand] = []
     if "ref" in ex.direct:
         cands.append(Cand(ex.direct["ref"][0].strip(), 9.0, ex.direct["ref"][1]))
+    m = RE_ARXIV.search(ex.text[:60000])
+    if m:
+        cands.append(Cand("arXiv-" + m.group(1), 9.0 if doc_type == "PAPER" else 5.0, "arXiv identifier"))
+    elif doc_type == "PAPER":
+        m = RE_DOI.search(ex.text[:30000])
+        if m:
+            cands.append(Cand(m.group(1).rstrip(".)"), 6.0, "DOI"))
+    seq_score = 7.0 if doc_type in STUDY_TYPES else 3.0
+    cands += find_sequence([(ex.big_title or "", seq_score + 0.5, "the title"), (ex.title or "", seq_score, "the file properties"),
+                            ("\n".join(header[:8]), seq_score - 0.5, "the top of the page"),
+                            ("" if is_generic_filename(stem) and not _seq_re().search(stem) else stem.replace("_", " "), seq_score - 1, "the original file name"),
+                            (ctx.get("link_text", ""), seq_score - 2, "the link text")])
 
     groups = [(doc_type, 5.0)] if doc_type in rules()["reference_labels"] else []
     groups += [("ANY", 2.0)]
@@ -335,7 +396,7 @@ def find_ref(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
                         cands.append(Cand(tok, sc, f'below "{ln.strip(" .:#|")}"'))
     best, ranked = _best(cands, key=lambda c: c.value.upper())
     if not best or best.score < 2:
-        return Field(None, 0.0, "no reference number found")
+        return Field(None, 0.0, "no reference / number found")
     value = best.value
     # Drawing revision
     rev = None
@@ -393,6 +454,55 @@ def _domain_name(domain: str) -> str:
     else:
         core = parts[-2] if len(parts) >= 2 else parts[0]
     return core.replace("-", " ").title()
+
+
+def _type_word(s: str) -> bool:
+    low = s.lower().strip()
+    return any(low == k or (len(k) > 5 and k in low) for t in rules()["doc_types"] for k in t["keywords"])
+
+
+RE_COURSE = re.compile(r"(?<![\w\-/])([A-Z]{2,5})\s?-?(\d{3,4}[A-Z]{0,2})(?![\w\-/])")
+_COURSE_BLOCK = {"ISO", "IEEE", "ISBN", "PNR", "GST", "GSTIN", "UTR", "HSN", "PAN", "DOI", "NO", "NR", "REV", "FAT",
+                 "ID", "PO", "INV", "AD", "BC", "PIN", "TEL", "FAX", "UPI", "IFSC", "AY", "FY", "SEM", "RFC", "CVE",
+                 "COVID", "SDG", "IP", "TCP", "UDP", "USB", "HDMI", "RTX", "GTX", "AMD", "ARM", "DDR", "MAY", "JUN",
+                 "JAN", "FEB", "MAR", "APR", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "WIN", "MS", "PS", "HW", "Q",
+                 "ROOM", "LAB", "PAGE", "EXP", "CAT", "TIME", "AM", "PM", "INR", "USD", "EUR", "RS", "NH", "SH"}
+RE_INSTITUTION = re.compile(
+    r"((?:[A-Z][\w&.'\-]*\s+){0,4}(?:University|Institute|College|School|Academy|Polytechnic|Vidyalaya|Vishwavidyalaya)"
+    r"(?:\s+(?:of|for)\s+[A-Z][\w&.'\-]*(?:\s+(?:and|&)?\s*[A-Z][\w&.'\-]*){0,3})?)")
+
+
+def _norm_course(s: str) -> str:
+    return re.sub(r"[\s\-]+", "", s).upper()
+
+
+def _course_ok(code: str) -> bool:
+    m = re.match(r"([A-Z]+)(\d+)([A-Z]*)$", code)
+    if not m or m.group(1) in _COURSE_BLOCK:
+        return False
+    if re.fullmatch(r"[A-Z]{5}\d{4}[A-Z]", code):      # PAN-number shape: never use personal IDs
+        return False
+    if re.fullmatch(r"(19|20)\d\d", m.group(2)) and not m.group(3):   # "SPRING 2026"
+        return False
+    return True
+
+
+def _acronym(full: str) -> str:
+    words = [w for w in re.split(r"[\s\-]+", full) if w]
+    caps = [w for w in words if w[:1].isupper() and w.lower() not in ("of", "and", "for", "the")]
+    if not caps:
+        return full
+    if caps[0].isupper() and len(caps[0]) <= 5:          # "IIT Madras" -> "IIT Madras"
+        return " ".join(caps[:2])
+    if len(caps) <= 2:                                     # "Stanford University" stays readable
+        return " ".join(caps)
+    ac = "".join(w[0] for w in caps)                      # "Vellore Institute of Technology" -> "VIT"
+    return ac if 2 <= len(ac) <= 6 else " ".join(words[:3])
+
+
+def _host_name(host: str) -> str:
+    n = _domain_name(host)
+    return n.upper() if n.isalpha() and len(n) <= 4 else n
 
 
 def find_party(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
@@ -485,7 +595,71 @@ def find_party(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
             cands.append(Cand(short_party(full), sc, f"{why}: {full}"))
         prev = ln
 
-    # --- 4. metadata organisation
+    # --- 4. course codes (CSE2001, CS 101, BCSE202L): the natural "source" of study material
+    lab_cc = re.compile(r"(?:course|subject|paper)\s*(?:code|no\.?)\s*[:\-|]*\s*([A-Z]{2,5}\s?-?\d{2,4}[A-Z]{0,2})(?![\w])", re.I)
+    for m in lab_cc.finditer(text[:60000]):
+        cands.append(Cand(_norm_course(m.group(1)), 8.0, f'course code "{m.group(1)}"'))
+        break
+    if doc_type in STUDY_TYPES:
+        for idx, ln in enumerate(header[:15] + ([ex.big_title] if ex.big_title else [])):
+            for m in RE_COURSE.finditer(ln):
+                code = _norm_course(m.group(0))
+                if _course_ok(code):
+                    cands.append(Cand(code, 4.5 - idx * 0.1, f'course code "{m.group(0)}" at the top'))
+        for src, sc in ((ctx.get("link_text", ""), 3.0), ("" if is_generic_filename(ctx.get("_stem", "")) else ctx.get("_stem", ""), 3.5)):
+            for m in RE_COURSE.finditer((src or "").replace("_", " ")):
+                code = _norm_course(m.group(0))
+                if _course_ok(code):
+                    cands.append(Cand(code, sc, f'course code "{m.group(0)}" in the name'))
+
+    # --- 5. universities / institutes -> short form (Vellore Institute of Technology -> VIT)
+    for idx, ln in enumerate(body[:200]):
+        for m in RE_INSTITUTION.finditer(ln):
+            full = re.sub(r"\s+", " ", m.group(1)).strip()
+            if _is_own(full, cfg) or len(full) < 6:
+                continue
+            sc = (2.5 if ln in hset else 1.0) + (1.0 if doc_type in ("CERT", "MARKS", "SYLL", "EXAM", "OFFER", "LETTER", "REPORT") else 0)
+            cands.append(Cand(_acronym(full), sc, f"institution: {full}"))
+
+    # --- 6a. who issued it: the big name at the top of receipts, tickets, certificates, bills
+    titles = [t for t in (ex.big_title or "").split(" || ") if t]
+    if doc_type in ("RCPT", "INV", "TICKET", "CERT", "OFFER", "STMT", "QUO") and titles:
+        for t in titles[:2]:
+            words = t.split()
+            if words and re.fullmatch(r"[A-Z]{2,6}", words[0]) and not _type_word(words[0]):
+                cands.append(Cand(words[0], 3.5, f'name at the top: "{t}"'))
+                break
+            if 1 <= len(words) <= 3 and not _type_word(t) and not re.search(r"\d", t):
+                cands.append(Cand(t.title() if t.isupper() else t, 3.5, f'name at the top: "{t}"'))
+                break
+    if doc_type in ("RCPT", "INV", "TICKET", "CERT", "OFFER", "STMT") and header:
+        top0 = header[0].strip()
+        w0 = top0.split()
+        if 1 <= len(w0) <= 3 and not re.search(r"\d", top0) and not _type_word(top0) and len(top0) <= 40:
+            cands.append(Cand(top0.title() if top0.isupper() and len(top0) > 4 else top0, 4.0, f'name at the very top: "{top0}"'))
+    if doc_type in ("RCPT", "INV", "TICKET"):
+        m = re.search(r"(?im)^\s*(?:merchant|sold by|seller|billed by|paid to|operator|airline)\s*[:\-]\s*([A-Z][\w&.' \-]{1,40})$", text[:20000])
+        if m:
+            cands.append(Cand(m.group(1).strip(), 5.0, f'labelled "{m.group(0).split(":")[0].strip()}"'))
+    # papers: first author's surname ("Vaswani et al")
+    if doc_type == "PAPER" and titles:
+        lines = header[:12]
+        for i, ln in enumerate(lines):
+            if titles[0][:25] in ln or ln in titles[0]:
+                for nxt in lines[i + 1:i + 3]:
+                    first = re.split(r",|\band\b|∗|\*|\d", nxt)[0].strip()
+                    if re.fullmatch(r"[A-Z][a-z]+(?:\s+[A-Z]\.?)?(?:\s+[A-Z][a-zA-Z\-']+){1,2}", first):
+                        more = len(re.findall(r",|\band\b", nxt)) > 0
+                        cands.append(Cand(first.split()[-1] + (" et al" if more else ""), 4.5, f"first author: {first}"))
+                        break
+                break
+
+    # --- 6. the website it came from (arxiv.org, moodle.vit.ac.in, coursera.org)
+    host = (ctx.get("page_host") or "").lower()
+    if host and host not in set(r["generic_hosts"]) and not any(host.endswith("." + g) for g in r["generic_hosts"]):
+        cands.append(Cand(_host_name(host), 2.5, f"website: {host}"))
+
+    # --- 7. metadata organisation
     for v, why in ((ex.company, "file properties: company"),):
         if v and not _is_own(v, cfg) and len(v) > 2:
             cands.append(Cand(short_party(v), 2.0, why))
@@ -508,7 +682,7 @@ def find_party(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
 
     best, ranked = _best(cands, key=lambda c: c.value.lower())
     if not best or best.score < 1.5:
-        return Field(None, 0.0, "no customer or supplier identified")
+        return Field(None, 0.0, "no source (course, sender, organisation) found")
     runner = next((c.score for c in ranked[1:]), None)
     return Field(best.value, _conf(best.score, runner, 8.0), best.source, [c.value for c in ranked[1:4]])
 
@@ -518,11 +692,18 @@ def find_party(ex: Extracted, ctx: dict, cfg: dict, doc_type: str) -> Field:
 _ADDRESS_HINT = re.compile(r"(?i)\b(street|str\.|strasse|straße|road|rd\.|nagar|plot|sipcot|phone|tel|fax|e-?mail|www\.|gstin|vat|pin|india|germany|deutschland|p\.?o\.? box|postfach|page\s+\d|seite\s+\d)\b|@|\d{5,}")
 
 
+_SMALL = {"and", "of", "the", "for", "to", "in", "on", "with", "from", "a", "an", "at", "by", "or", "vs", "via", "using"}
 _UNITS = {"mm", "cm", "kg", "pcs", "nos", "mpa", "kn", "um", "µm", "mic", "pol", "ltr"}
 
 
-def _clean_subject(s: str, remove: list[str], phrases: list[str] = ()) -> str:
-    sw = set(rules()["subject_stopwords"])
+_FILLER = {"re", "fw", "fwd", "aw", "wg", "please", "find", "attached", "attachment", "pdf", "docx", "xlsx",
+           "pptx", "final", "v1", "v2", "v3", "copy", "download", "file", "document", "dear", "hello", "hi", "new",
+           "updated", "kind", "reg", "ref"}
+
+
+def _clean_subject(s: str, remove: list[str], phrases: list[str] = (), light: bool = False) -> str:
+    """light=True for real titles: keep small words ('Attention Is All You Need'); drop only filler."""
+    sw = _FILLER if light else set(rules()["subject_stopwords"])
     s = re.sub(r"^\s*((re|aw|fw|fwd|wg|antw)\s*:\s*)+", "", s, flags=re.I)
     s = re.sub(r"\[[^\]]*\]", " ", s)
     for d, a, b in sorted(find_dates_in(s), key=lambda x: -x[1]):
@@ -535,25 +716,45 @@ def _clean_subject(s: str, remove: list[str], phrases: list[str] = ()) -> str:
                 if len(tok) > 1:
                     s = re.sub(r"(?<![\w])" + re.escape(tok) + r"(?![\w])", " ", s, flags=re.I)
     words = re.findall(r"[A-Za-zÄÖÜäöüß0-9][A-Za-zÄÖÜäöüß0-9.+/&\-]*", s)
+    alpha = [w for w in words if w.isalpha()]
+    shouting = alpha and sum(w.isupper() for w in alpha) / len(alpha) > 0.6
+    if shouting:   # "RAVI KUMAR" -> "Ravi Kumar", keeps short acronyms (AI, ML, TCP)
+        words = [w.capitalize() if w.isalpha() and w.isupper() and len(w) >= 4 else w for w in words]
     out = []
     for w in words:
         lw = w.lower().strip(".")
-        if lw in sw or len(lw) < 2:
+        if lw in sw or (len(lw) < 2 and not (light and out and lw.isalpha())):
             continue
         if re.fullmatch(r"[\d.\-/]+", w) and len(w) > 6:
             continue
         w = w.strip(".-/")
-        if w.isalpha() and w.islower() and len(w) >= 3 and w not in _UNITS:
-            w = w.capitalize()
+        if w[:1].islower() and len(w) >= 3 and w not in _UNITS and lw not in _SMALL:
+            w = w[0].upper() + w[1:]
         elif w.isalpha() and w.isupper() and len(w) > 4:
             w = w.capitalize()
         out.append(w)
-        if len(out) >= 5:
+        if len(out) >= 7:
             break
+    while out and out[-1].lower() in ("of", "and", "the", "a", "an", "to", "for", "in", "on", "with", "&"):
+        out.pop()
+    while out and out[0].lower() in ("the", "a", "an", "of", "and", "&", "to"):
+        out.pop(0)
     return " ".join(out)
 
 
-def find_subject(ex: Extracted, ctx: dict, cfg: dict, stem: str, used: list[str]) -> Field:
+def _code_comment(text: str) -> str | None:
+    """First meaningful line of a module docstring or top comment in a source file."""
+    m = re.match(r'\s*(?:#![^\n]*\n)?(?:#[^\n]*coding[^\n]*\n)?\s*(?:"""|\'\'\'|/\*\*?)\s*([^\n]+)', text)
+    if m:
+        return m.group(1).strip(" *\"'")
+    for ln in text.splitlines()[:15]:
+        c = re.match(r"\s*(?:#|//|--|%)\s*(.+)", ln)
+        if c and not re.search(r"(?i)^(!|-\*-|coding|copyright|license|author|@|=+$|-+$|\*+$|todo)", c.group(1)):
+            return c.group(1).strip()
+    return None
+
+
+def find_subject(ex: Extracted, ctx: dict, cfg: dict, stem: str, used: list[str], doc_type: str = "") -> Field:
     r = rules()
     header, hset, body = _lines(ex)
     type_words = [k for t in r["doc_types"] for k in t["keywords"]]
@@ -586,7 +787,30 @@ def find_subject(ex: Extracted, ctx: dict, cfg: dict, stem: str, used: list[str]
             if rest and len(rest) > 2:
                 cands.append(Cand(rest[:120], 6.0 if ln in hset else 3.5, f'labelled "{m.group(0)}"'))
     if ex.title and not is_generic_filename(ex.title) and not re.match(r"(?i)microsoft (word|excel|powerpoint)", ex.title):
-        cands.append(Cand(ex.title, 4.0, "document title in file properties"))
+        cands.append(Cand(ex.title, 4.5 if doc_type == "NB" else 4.0, "document title in file properties" if doc_type != "NB" else "first heading in the notebook"))
+    big = 6.5 if doc_type in ("PAPER", "SLIDES", "REPORT", "BOOK", "ASSIGN", "LAB", "NOTES", "CERT", "SYLL", "EXAM", "GUIDE") else 5.0
+    for i, t in enumerate([t for t in (ex.big_title or "").split(" || ") if t]):
+        if is_generic_filename(t) or RE_INSTITUTION.search(t.title()) or _company_re().search(t):
+            continue
+        cands.append(Cand(t, big - 1.2 * i, "title (largest text on page 1)" if i == 0 else "heading on page 1"))
+    top = ex.text[:20000]
+    m = re.search(r"(?i)(?:course|paper|subject)\s*(?:title|name)\s*[:\-]\s*([^|\n]{3,90}?)(?:\s{3,}|\||$)", top, re.M)
+    if m:
+        cands.append(Cand(m.group(1).strip(), 6.0, "course title"))
+    if doc_type == "CERT":
+        m = re.search(r"(?is)(?:successfully\s+completed|completion\s+of|for\s+completing|participated\s+in|in\s+recognition\s+of)\s*(?:the\s+)?(?:course\s+)?([^\n]*)\n?([^\n]*)", top)
+        if m:
+            val = m.group(1).strip(" :.") or m.group(2).strip(" :.")
+            if val:
+                cands.append(Cand(val[:100], 7.5, "what the certificate is for"))
+    if doc_type == "TICKET":
+        m = re.search(r"(?i)\bfrom\s*:?\s*(?:[A-Z]{2,5}\s+)?([A-Za-z][A-Za-z .]{2,30}?)\s+to\s*:?\s*(?:[A-Z]{2,5}\s+)?([A-Za-z][A-Za-z .]{2,30}?)(?:\s{2,}|\||$|\n)", top, re.M)
+        if m:
+            cands.append(Cand(f"{m.group(1).strip()} to {m.group(2).strip()}", 7.0, "journey (from / to)"))
+    if doc_type == "CODE":
+        c = _code_comment(ex.text[:5000])
+        if c:
+            cands.append(Cand(c, 3.0, "first comment in the code"))
     if not is_generic_filename(stem):
         cands.append(Cand(re.sub(r"[_]+", " ", stem), 3.5, "original file name"))
     lt = ctx.get("link_text", "")
@@ -608,8 +832,9 @@ def find_subject(ex: Extracted, ctx: dict, cfg: dict, stem: str, used: list[str]
     # drop document-type words that are titles on their own ("Quotation", "Rechnung") and labels
     phrases = [k for k in type_words if " " in k or len(k) > 5] + ["no", "nr", "number", "date", "datum"]
     cleaned = []
+    loose = ("original file name", "link text", "title line")
     for c in cands:
-        v = _clean_subject(str(c.value), used, phrases)
+        v = _clean_subject(str(c.value), used, phrases, light=not any(x in c.source for x in loose))
         if v and len(v) >= 3:
             cleaned.append(Cand(v, c.score, c.source))
     best, ranked = _best(cleaned, key=lambda c: c.value.lower())

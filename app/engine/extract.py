@@ -9,6 +9,7 @@ from __future__ import annotations
 import datetime as dt
 import email
 import email.policy
+import json
 import email.utils
 import html
 import io
@@ -39,6 +40,7 @@ class Extracted:
     text: str = ""
     header: str = ""                 # top of first page / first rows: where titles, numbers, dates live
     title: str | None = None         # document metadata title
+    big_title: str | None = None     # largest text near the top of page 1 (PDF titles, slide headings)
     author: str | None = None
     company: str | None = None       # metadata company (often the author's company)
     meta_dates: list = field(default_factory=list)   # [(date, source)]
@@ -188,6 +190,47 @@ def _pdf(data: bytes, ex: Extracted):
     ex.text = text
     first = pages[0] if pages and pages[0].strip() else text
     ex.header = _head(first)
+    if reader.pages and not ex.ocr_used:
+        ex.big_title = _pdf_big_title(reader.pages[0])
+
+
+def _pdf_big_title(page) -> str | None:
+    """The title is usually the largest text in the top part of page 1."""
+    runs = []
+    try:
+        height = float(page.mediabox.height)
+    except Exception:
+        height = 842.0
+
+    def visit(text, cm, tm, font_dict, font_size):
+        if not text or not text.strip():
+            return
+        try:
+            scale = (abs(tm[3]) or abs(tm[0]) or 1.0) * (abs(cm[3]) or abs(cm[0]) or 1.0)
+            size = float(font_size) * scale
+            y = tm[5] * (cm[3] or 1.0) + cm[5]
+        except Exception:
+            return
+        runs.append((round(size, 1), y, text.strip()))
+
+    try:
+        page.extract_text(visitor_text=visit)
+    except Exception:
+        return None
+    top = [r for r in runs if r[1] >= height * 0.4 and len(r[2]) >= 2]
+    if not top:
+        return None
+    sizes = sorted({r[0] for r in top}, reverse=True)
+    body = sorted(r[0] for r in runs)[len(runs) // 2] if runs else 10
+    found = []
+    for s in sizes[:4]:
+        if s < body * 1.15:      # not noticeably bigger than normal text
+            break
+        parts = [r[2] for r in sorted((r for r in top if abs(r[0] - s) <= 0.6), key=lambda r: -r[1])]
+        title = re.sub(r"\s+", " ", " ".join(parts)).strip()
+        if 3 <= len(title) <= 200 and sum(c.isalpha() for c in title) >= 3:
+            found.append(title)
+    return " || ".join(found[:3]) or None
 
 
 def _iter_docx_blocks(doc):
@@ -333,6 +376,12 @@ def _pptx(data: bytes, ex: Extracted):
         slides.append("\n".join(parts))
     ex.text = "\n".join(slides)
     ex.header = _head(slides[0] if slides else "")
+    try:
+        first = list(prs.slides)[0]
+        if first.shapes.title is not None and first.shapes.title.text.strip():
+            ex.big_title = first.shapes.title.text.strip()
+    except Exception:
+        pass
     cp = prs.core_properties
     ex.title = (cp.title or "").strip() or None
     ex.author = (cp.author or "").strip() or None
@@ -684,6 +733,22 @@ def _zip(data: bytes, ex: Extracted):
         ex.meta_dates.append((max(dates), "newest file in archive"))
 
 
+def _ipynb(data: bytes, ex: Extracted):
+    nb = json.loads(data[:20_000_000].decode("utf-8", "ignore"))
+    md, code = [], []
+    for cell in (nb.get("cells") or [])[:500]:
+        src = cell.get("source", "")
+        src = "".join(src) if isinstance(src, list) else str(src)
+        (md if cell.get("cell_type") == "markdown" else code).append(src)
+    for block in md:
+        m = re.search(r"^\s*#{1,3}\s+(.+)$", block, re.M)
+        if m:
+            ex.title = m.group(1).strip()
+            break
+    ex.text = "\n".join(md + code)
+    ex.header = _head("\n".join(md[:3]) or ex.text)
+
+
 def _plain(data: bytes, ex: Extracted, kind: str):
     s = _decode(data[:5_000_000])
     if kind == "html":
@@ -698,7 +763,7 @@ EXTRACTORS = {
     "pdf": _pdf, "docx": _docx, "xlsx": _xlsx, "xlsm": _xlsx, "xls": _xls, "pptx": _pptx,
     "odt": _odf, "ods": _odf, "doc": _ole_strings, "ppt": _ole_strings, "msg": _msg, "eml": _eml,
     "dxf": _dxf, "dwg": _dwg, "step": _step, "iges": _iges, "png": _image, "jpg": _image,
-    "tif": _image, "gif": _image, "bmp": _image, "rtf": _rtf, "zip": _zip,
+    "tif": _image, "gif": _image, "bmp": _image, "rtf": _rtf, "zip": _zip, "ipynb": _ipynb,
 }
 
 
@@ -708,7 +773,7 @@ def extract(data: bytes, kind: str) -> Extracted:
     try:
         if fn:
             fn(data, ex)
-        elif kind in ("txt", "csv", "html", "xml"):
+        elif kind in ("txt", "csv", "html", "xml", "json"):
             _plain(data, ex, kind)
         elif kind == "ole":
             _ole_meta(data, ex)

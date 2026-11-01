@@ -1,6 +1,6 @@
 """Create a self-signed HTTPS certificate for the intranet server.
 
-  python scripts/make_cert.py renamer.kramski.local [other-name ...]
+  python scripts/make_cert.py hop.local [other-name ...]
 
 Better: ask IT for a certificate from the company's internal CA, so browsers trust it without warnings.
 """
@@ -23,7 +23,7 @@ for n in names + ["localhost"]:
         alt.append(x509.IPAddress(ipaddress.ip_address(n)))
     except ValueError:
         alt.append(x509.DNSName(n))
-subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, names[0]), x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Smart Renamer (internal)")])
+subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, names[0]), x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Hop (internal)")])
 now = dt.datetime.now(dt.timezone.utc)
 cert = (x509.CertificateBuilder().subject_name(subject).issuer_name(subject).public_key(key.public_key())
         .serial_number(x509.random_serial_number()).not_valid_before(now - dt.timedelta(minutes=5))

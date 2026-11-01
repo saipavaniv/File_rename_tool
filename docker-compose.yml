@@ -6,6 +6,7 @@ services:
     env_file: .env
     environment:
       DATA_DIR: /data
+      PORT: "8443"
       SSL_CERTFILE: /certs/server.crt
       SSL_KEYFILE: /certs/server.key
     ports: ["8443:8443"]

@@ -2,27 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Smart Renamer · Settings</title>
+  <title>Hop · Settings</title>
   <link rel="stylesheet" href="popup.css">
   <link rel="stylesheet" href="options.css">
 </head>
 <body class="opt">
   <div class="opt-card">
-    <header><img src="icons/32.png" alt=""><b>Smart Renamer settings</b></header>
+    <header><span class="bunny" aria-hidden="true">🐇</span><b>Hop settings</b></header>
     <form id="f" novalidate>
-      <label for="server">Server address</label>
-      <input id="server" type="url" placeholder="https://renamer.kramski.local" spellcheck="false" required>
-      <p class="hint">The address of the Smart Renamer website your company runs.</p>
+      <p id="state" class="state"></p>
 
-      <label for="token">Personal key</label>
-      <input id="token" type="password" placeholder="krn_…" spellcheck="false" autocomplete="off" required>
-      <p class="hint">Create it on the website under <b>Account → Browser button</b>. It is stored only in this browser.</p>
+      <label for="server">Hop address</label>
+      <input id="server" type="url" placeholder="http://localhost:8000" spellcheck="false">
+      <p class="hint">Leave it as <span class="mono">http://localhost:8000</span> if Hop runs on this computer.</p>
 
-      <label for="folder">Save into this folder inside Downloads</label>
-      <input id="folder" type="text" maxlength="60" placeholder="Renamed (leave empty for Downloads itself)">
+      <label for="folder">Save renamed files into this folder inside Downloads</label>
+      <input id="folder" type="text" maxlength="60" placeholder="Hop  (leave empty for Downloads itself)">
 
       <div id="msg" class="hidden"></div>
-      <div class="actions"><button class="primary" type="submit">Save and test</button></div>
+      <div class="actions"><button class="primary" type="submit">Connect</button> <button type="button" id="saveOnly">Save folder only</button></div>
+
+      <details>
+        <summary class="hint">Advanced: paste a key instead</summary>
+        <label for="token">Personal key (from Hop → Account)</label>
+        <input id="token" type="password" placeholder="krn_…" spellcheck="false" autocomplete="off">
+        <div class="actions"><button type="button" id="saveKey">Save key and test</button></div>
+      </details>
     </form>
     <p class="hint">Shortcut: <b>Alt+Shift+R</b> on any page. Change it at <span class="mono">chrome://extensions/shortcuts</span>.</p>
   </div>

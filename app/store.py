@@ -11,8 +11,8 @@ from .engine.naming import DEFAULT_TEMPLATE
 from .models import Party, Setting
 
 DEFAULTS = {
-    "own_names": ["Kramski"],
-    "own_domains": ["kramski.com"],
+    "own_names": [],
+    "own_domains": [],
     "template": DEFAULT_TEMPLATE,
     "date_order": "DMY",
     "auto_threshold": 0.75,

@@ -9,6 +9,11 @@
   $("#origin").textContent = location.origin;
   $("#pwForm").addEventListener("submit", changePw);
   $("#mkTok").addEventListener("click", makeToken);
+  $("#copyExt").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#extUrl").textContent); toast("Copied: paste it in the address bar"); }
+    catch (e) { toast("Type chrome://extensions in the address bar", true); }
+  });
+  if (/Edg\//.test(navigator.userAgent)) $("#extUrl").textContent = "edge://extensions";
   $("#copyTok").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText($("#tokVal").textContent); toast("Key copied"); }
     catch (e) { toast("Select the key and copy it manually", true); }

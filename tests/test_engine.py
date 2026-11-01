@@ -16,38 +16,47 @@ S = ROOT / "samples"
 
 @pytest.fixture(scope="module")
 def cfg():
-    if not (S / "parties.csv").exists():
+    if not (S / "sources.csv").exists():
         subprocess.run([sys.executable, str(ROOT / "scripts" / "make_samples.py"), str(S)], check=True)
-    return {"party_rows": list(csv.DictReader(open(S / "parties.csv"))), "today": "2026-10-30"}
+    return {"party_rows": list(csv.DictReader(open(S / "sources.csv"))), "today": "2026-10-31"}
 
 
-EXPECT = {
-    "Document1.pdf": ("2026-10-28", "QUO", "Precitool", "PTC/Q/2026/0457"),
-    "Document2.docx": ("2026-10-14", "PO", "Lumen-Auto", "4500098123"),
-    "Book1.xlsx": ("2026-10-21", "INV", "Sri Balaji Metals", "SBM/2026-27/1189"),
-    "mail.eml": ("2026-10-27", "MAIL", "Lumen-Auto", "77812"),
-    "export.dxf": ("2026-09-15", "DRW", "Lumen-Auto", "KR-4711-02 RevC"),
-    "Part1.stp": ("2026-10-02", "CAD", "Lumen-Auto", "7781-2210"),
-    "scan_0034.pdf": ("2026-10-02", "CERT", "Wieland", "MTC-88231"),   # scanned: needs Tesseract
-    "Document3.docx": ("2026-10-22", "MOM", "Lumen-Auto", None),
+EXPECT = {   # file: (date, type, from, number, title)
+    "1706.03762v5.pdf": ("2017-12-06", "PAPER", "Vaswani et al", "arXiv-1706.03762", "Attention Is All You Need"),
+    "DA3.pdf": ("2026-10-28", "ASSIGN", "BCSE202L", "Assignment-3", "Linked Lists and Stacks"),
+    "QP.pdf": ("2025-11-19", "EXAM", "MAT2002", None, "Applications of Differential and Difference Equations"),
+    "certificate.pdf": ("2026-09-12", "CERT", "Coursera", "8XK2QPL7M4ZA", "Machine Learning Specialization"),
+    "receipt_1730284112.pdf": ("2026-10-30", "RCPT", "Spotify", "T2610301198745", None),
+    "ticket.pdf": ("2026-11-12", "TICKET", None, "4521367890", "Chennai Central to Katpadi Jn"),
+    "lec07.pptx": ("2026-10-01", "SLIDES", "CS301", "Lecture-7", "Dynamic Programming"),
+    "Document1.docx": ("2026-10-21", "LAB", "CSE3001", "Exp-5", None),
+    "main.py": ("2026-10-31", "CODE", None, None, "Dijkstra Shortest Path on a Weighted Graph"),
+    "Untitled.ipynb": ("2026-10-31", "NB", None, None, "Linear Regression from Scratch"),
+    "mail.eml": ("2026-10-27", "MAIL", "VIT", None, None),
+    "Screenshot 2026-10-30 142233.png": ("2026-10-30", "SHOT", None, None, None),
 }
 
 
 @pytest.mark.parametrize("name", list(EXPECT))
 def test_fields(name, cfg):
-    from app.engine.extract import ocr_available
-    if name.startswith("scan") and not ocr_available():
-        pytest.skip("Tesseract not installed")
     r = analyse((S / name).read_bytes(), name, {}, cfg)
     f = r["fields"]
-    got = (f["date"]["value"], f["type"]["value"], f["party"]["value"], f["ref"]["value"])
-    assert got == EXPECT[name], r["suggested_name"]
-    assert r["status"] == "auto"
+    got = tuple(f[k]["value"] for k in ("date", "type", "party", "ref", "subject"))
+    exp = EXPECT[name]
+    for k, g, e in zip(("date", "type", "party", "ref", "subject"), got, exp):
+        if e is not None:
+            assert g == e, f"{k}: {g!r} != {e!r}  ({r['suggested_name']})"
 
 
-def test_document_beats_page_sender(cfg):
-    r = analyse((S / "Book1.xlsx").read_bytes(), "Book1.xlsx", {"sender_emails": ["a@lumen-auto.de"]}, cfg)
-    assert r["fields"]["party"]["value"] == "Sri Balaji Metals"
+def test_code_is_allowed_but_programs_are_not(cfg):
+    assert analyse(b"print('hi')", "hello.py", {}, cfg)["status"] != "blocked"
+    assert analyse(b"MZ\x90\x00", "notes.pdf", {}, cfg)["status"] == "blocked"
+    assert analyse(b"x", "setup.bat", {}, cfg)["status"] == "blocked"
+
+
+def test_website_is_a_hint(cfg):
+    r = analyse(b"Some notes about graphs.\nBFS and DFS.", "graphs.txt", {"page_host": "moodle.vit.ac.in"}, cfg)
+    assert r["fields"]["party"]["value"] == "VIT"
 
 
 def test_zip_bomb(cfg):

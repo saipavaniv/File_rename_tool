@@ -16,7 +16,7 @@ KIND_EXT = {
     "msg": ".msg", "eml": ".eml", "dxf": ".dxf", "dwg": ".dwg", "step": ".step",
     "iges": ".igs", "png": ".png", "jpg": ".jpg", "tif": ".tif", "gif": ".gif",
     "bmp": ".bmp", "zip": ".zip", "7z": ".7z", "rar": ".rar", "rtf": ".rtf",
-    "csv": ".csv", "txt": ".txt", "html": ".html", "xml": ".xml",
+    "csv": ".csv", "txt": ".txt", "html": ".html", "xml": ".xml", "ipynb": ".ipynb", "json": ".json",
 }
 
 # Zip-bomb guard for Office/zip containers.
@@ -28,10 +28,16 @@ MAX_MEMBERS = 5000
 # Programs and scripts are never renamed: a renamed .hta/.exe looking like an invoice is a phishing gift.
 DANGEROUS_EXT = {
     ".exe", ".com", ".scr", ".pif", ".msi", ".msp", ".msc", ".dll", ".cpl", ".sys", ".drv", ".ocx",
-    ".bat", ".cmd", ".ps1", ".psm1", ".psd1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".hta",
+    ".bat", ".cmd", ".ps1", ".psm1", ".psd1", ".vbs", ".vbe", ".jse", ".wsf", ".wsh", ".hta",
     ".lnk", ".url", ".reg", ".inf", ".jar", ".appx", ".msix", ".application", ".gadget", ".iso", ".img",
-    ".vhd", ".vhdx", ".sh", ".py", ".pyw", ".pl", ".rb", ".app", ".dmg", ".pkg", ".deb", ".rpm", ".apk",
-    ".docm", ".dotm", ".xlam", ".pptm", ".ppam", ".svg", ".chm", ".settingcontent-ms", ".library-ms",
+    ".vhd", ".vhdx", ".app", ".dmg", ".pkg", ".deb", ".rpm", ".apk",
+    ".docm", ".dotm", ".xlam", ".pptm", ".ppam", ".chm", ".settingcontent-ms", ".library-ms",
+}
+# Source code is welcome (it's only read, never run).
+CODE_EXT = {
+    ".py", ".java", ".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".cs", ".js", ".mjs", ".ts", ".jsx", ".tsx",
+    ".go", ".rs", ".rb", ".php", ".kt", ".swift", ".scala", ".r", ".m", ".sql", ".sh", ".html", ".htm",
+    ".css", ".scss", ".lua", ".dart", ".hs", ".pl", ".asm", ".s", ".v", ".sv", ".ino", ".f90",
 }
 
 
@@ -136,6 +142,8 @@ def detect_kind(data: bytes, filename: str = "") -> str:
     if _looks_like_text(head):
         text = head.decode("latin-1", "ignore")
         stripped = text.lstrip()
+        if stripped.startswith("{") and '"cells"' in data[:2_000_000].decode("utf-8", "ignore") and '"nbformat"' in data[-20000:].decode("utf-8", "ignore") + text:
+            return "ipynb"
         if stripped.startswith("ISO-10303-21"):
             return "step"
         lines = [ln.strip() for ln in stripped.splitlines()[:4]]
@@ -152,6 +160,8 @@ def detect_kind(data: bytes, filename: str = "") -> str:
             return "html"
         if stripped.startswith("<?xml"):
             return "xml"
+        if stripped[:1] in ("{", "[") and ext == "json":
+            return "json"
         if ext == "csv":
             return "csv"
         return "txt"

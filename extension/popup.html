@@ -2,21 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Smart Renamer</title>
+  <title>Hop</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header>
-    <img src="icons/32.png" alt="">
-    <b>Smart Renamer</b>
+    <span class="bunny" aria-hidden="true">🐇</span>
+    <b>Hop</b>
     <span class="sp"></span>
     <button class="link" id="settings" title="Settings">Settings</button>
   </header>
 
   <div id="setup" class="empty hidden">
-    <b>Connect to your company server</b>
-    <p>Add the server address and your personal key once.</p>
-    <button class="primary" id="openSetup">Open settings</button>
+    <div class="big-bunny" aria-hidden="true">🐇</div>
+    <b>Let's connect Hop</b>
+    <p id="setupMsg">One click, then press <strong>Allow</strong> in the tab that opens.</p>
+    <button class="primary big" id="connect">Connect</button>
+    <p class="hint" id="setupHint"></p>
   </div>
 
   <div id="main" class="hidden">
@@ -25,14 +27,14 @@
     <div id="access" class="access hidden"></div>
     <ul id="list"></ul>
     <div id="none" class="empty hidden">
-      <b>No files found on this page</b>
-      Open the email or page that has the attachments, then click again. You can also right-click any link and choose <i>Rename &amp; download</i>.
+      <b>No files on this page</b>
+      Open the page or email with the attachments, then click 🐇 again. Tip: right-click any link → <i>Rename &amp; download with Hop</i>.
     </div>
     <footer>
       <button id="again">Scan again</button>
       <button id="retry" class="hidden">Retry failed</button>
       <span class="sp"></span>
-      <button class="link" id="site">Open website</button>
+      <button class="link" id="site">Open Hop</button>
     </footer>
   </div>
   <script src="popup.js"></script>

@@ -1,130 +1,90 @@
-# Smart Renamer
+# Hop 🐇
 
-An internal tool that reads incoming files and gives them clear, consistent names:
+Hop turns messy downloads into clear, consistent file names. It runs on your own computer, with no cloud and no AI services.
 
 ```
-Document1.pdf   →  2026-10-28_QUO_Precitool_PTC-Q-2026-0457_Progressive-Die-Contact-Spring-KR-5520.pdf
-Book1.xlsx      →  2026-10-21_INV_Sri-Balaji-Metals_SBM-2026-27-1189_CuSn6-Strip-0-3-42-mm.xlsx
-export.dxf      →  2026-09-15_DRW_Lumen-Auto_KR-4711-02-RevC_Contact-Spring-0-64-mm.dxf
-scan_0034.pdf   →  2026-10-02_CERT_Wieland_MTC-88231_CuSn6-R420-Strip-0-30-42-0.pdf
+DA3.pdf           →  2026-10-28_ASSIGN_BCSE202L_Assignment-3_Linked-Lists-and-Stacks.pdf
+1706.03762v5.pdf  →  2017-12-06_PAPER_Vaswani-et-al_arXiv-1706-03762_Attention-Is-All-You-Need.pdf
+lec07.pptx        →  2026-10-01_SLIDES_CS301_Lecture-7_Dynamic-Programming.pptx
+QP.pdf            →  2025-11-19_EXAM_MAT2002_Applications-of-Differential-and-Difference-Equations.pdf
+Untitled.ipynb    →  2026-10-31_NB_Linear-Regression-from-Scratch.ipynb
+main.py           →  2026-10-31_CODE_Dijkstra-Shortest-Path-on-a-Weighted-Graph.py
+certificate.pdf   →  2026-09-12_CERT_Coursera_8XK2QPL7M4ZA_Machine-Learning-Specialization.pdf
+ticket.pdf        →  2026-11-12_TICKET_4521367890_Chennai-Central-to-Katpadi-Jn.pdf
 ```
+
+The pattern is `DATE_TYPE_FROM_NUMBER_TITLE`. Parts that don't apply are left out, and you can change the pattern under Admin → Naming rules.
 
 There are two ways to use it:
-
-* **Website:** drag files in, check the suggested names, then download them.
-* **Browser button (Chrome/Edge):** click the icon, or press **Alt+Shift+R**, on any page with attachments. Every file on that page is renamed and saved to Downloads. You can also right-click a single link and choose *Rename & download*.
-
-Everything runs on **one company server**. There are no cloud services, no AI APIs and no internet calls. Files are analysed in memory and then discarded. Only the names, a fingerprint (SHA-256) and the fields that were found are kept, for the history.
+* **Website:** drag files onto the page, check the names, and download.
+* **🐇 button:** one click on any page with files (a course page, an email, a portal) renames every file and saves it to `Downloads/Hop`. The shortcut is **Alt+Shift+R**. You can also right-click any link and choose *Rename & download with Hop*.
 
 ---
 
-## 1. How it decides the name
+## Start Hop (Windows)
 
-The name pattern is `DATE_TYPE_COMPANY_REFERENCE_SUBJECT.ext`, and an admin can change it. Each part is found by explainable rules, not guesswork. Every suggestion shows **where** each value came from, for example *"labelled 'Invoice No', in document header"*.
+1. Install **Python 3.11+** from python.org and tick **"Add python.exe to PATH"**.
+2. Double-click **`run_local.bat`**. The first run takes a few minutes while it installs things.
+3. The browser opens at **http://localhost:8000**. Sign in with **admin / Smart-Rename-2026!**, then change the password under Account.
+
+Keep the black window open while you use Hop. Closing it stops Hop. If you can't sign in, double-click **`create_admin.bat`**.
+
+Optional: install **Tesseract OCR** to read scanned PDFs and photos of documents.
+
+## Add the 🐇 button (Chrome / Edge, one time)
+
+1. Go to `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode** (top right).
+2. Click **Load unpacked** and pick the **`extension`** folder.
+3. A tab opens by itself asking *"Connect the Hop button?"*. Click **Allow**. Done.
+
+Pin the 🐇 icon to the toolbar using the puzzle-piece icon. If Hop wasn't running when you installed the button, start Hop, click 🐇 and press **Connect**.
+
+---
+
+## How Hop decides the name
+
+There's no AI involved, only transparent rules. On the website, every part of the name shows **where it was found**.
 
 | Step | What happens | Technology |
 |---|---|---|
-| 1. Identify the file | Checks the real file type from its bytes, not its extension. A `.pdf` that is really a Word file is handled correctly, and the right extension is put back. | Magic-byte signatures, `olefile` for old Office/Outlook files |
-| 2. Safety check | Rejects zip bombs, damaged containers and unsafe paths. Parsing runs in a separate, time-limited, memory-limited process that is restarted regularly. | `pebble` process pool, OS resource limits |
-| 3. Read the content | Extracts the text, tables, headers and footers, and the file properties. | PDF: `pypdf`. Word: `python-docx`. Excel: `openpyxl` and `xlrd`. PowerPoint: `python-pptx`. Outlook `.msg`: `extract-msg`. `.eml`: Python `email`. |
-| 4. Scans and photos | When a PDF has no text layer, or the file is an image, the text is read optically (English + German). | Tesseract OCR with `pypdfium2` |
-| 5. CAD | DXF title blocks give the drawing number, revision, title, customer and date. The STEP header gives the part number, name, organisation and date. IGES uses its global section. DWG is read through the free ODA File Converter if installed. | `ezdxf`, STEP/IGES header parsers |
-| 6. Find the 5 fields | **Date:** found next to labels like *Date / Datum / Invoice date*. "Valid until" and "delivery date" are ignored. **Type:** 23 document types (quotation, PO, invoice, drawing, PPAP, 8D, certificate and more) are scored by English and German keywords, which count 3× in the title area. **Reference:** found after labels such as *Quotation No / Bestellnummer / Drawing No*. **Company:** from the letterhead, *To/From/Customer* labels, email domains and legal suffixes (GmbH, Pvt Ltd, AG …), always excluding Kramski itself. **Subject:** from the *Subject/Betreff* line, the email subject or the CAD title. | Rule file `app/engine/rules.json`, which can be edited without code |
-| 7. Match to your own lists | Company names are matched to the customer/supplier master list, so *"ACME Gmbh."*, *"Acme GmbH & Co KG"* and *@acme.de* all become one short name. | `rapidfuzz` fuzzy matching against the imported ERP list |
-| 8. Score and compose | Every value gets a confidence score. Names above the threshold are marked **Ready**. The rest show **Please check**. The name is made safe: no special characters, umlauts written out, Windows reserved names avoided, under 120 characters, and the extension can never be changed. | `app/engine/naming.py` |
-| 9. Learn | Every correction a person makes is stored. *Admin → Corrections* shows the most frequent ones, so you know which alias or rule to add. | `corrections` table |
+| Identify | Checks the file's real type from its bytes, not its extension. Programs and scripts (`.exe`, `.bat`, `.hta`, macro files …) are refused, even when disguised as a PDF. Source code is fine. | magic-byte signatures, `olefile` |
+| Read | Pulls out the text, tables, slide titles, notebook headings, email sender, subject and date, and file properties. | `pypdf`, `python-docx`, `openpyxl`, `python-pptx`, `extract-msg`, Python `email`, `ezdxf` |
+| Title | Takes the **largest text at the top of page 1** (paper and assignment titles), the first slide title, the first notebook heading, or a code file's docstring. | font-size analysis in `pypdf` |
+| Type | Scores 25+ document types by keywords, counting 3× near the top. Types include paper, slides, notes, assignment, lab, exam, syllabus, report, book, resume, certificate, grade card, offer letter, letter, form, receipt, invoice, ticket, bank statement, agreement, guide, code, notebook, dataset and screenshot. | `app/engine/rules.json` (edit it freely) |
+| From | Course codes (`BCSE202L`, `CS 301`), colleges as short forms (*Vellore Institute of Technology* → `VIT`), issuers at the top (`Coursera`, `Spotify`), a paper's first author (`Vaswani et al`), the email sender, or the website the file came from. | rules + `rapidfuzz` matching |
+| Number | Assignment, lab or lecture numbers (`Assignment-3`, `Exp-5`, `Lecture-7`), arXiv IDs and DOIs, invoice, transaction, PNR and credential numbers. | label rules |
+| Date | Dates next to labels like *Date / Date of Exam / Date of Journey*. Due dates and dates of birth are ignored. It falls back to the date in the file name, then the file properties, then today's date. | regex date parser (day-first by default) |
+| Safe name | No special characters or spaces, at most 120 characters. You can edit names, but the file extension can never be changed. | `app/engine/naming.py` |
 
-**The biggest accuracy boost is to import the customer and supplier list** (Admin → Customers & suppliers → CSV from the ERP). Then the company part of the name is always the official short name.
+**Optional:** Admin → Known sources lets you teach Hop names it should always write the same way, for example *Vellore Institute of Technology → VIT*, or anything from `@vit.ac.in`.
 
----
+## Security
 
-## 2. Install the server (one time)
+* **Stays on your computer:** Hop only listens on `127.0.0.1`, so other devices can't reach it. It makes no internet calls, and file contents are never stored.
+* **Accounts:** Argon2id password hashing, a 12+ character password policy, sign-in throttling, and the same error for wrong usernames and wrong passwords.
+* **Sessions:** secure `HttpOnly` / `SameSite=Strict` cookies, idle timeout and CSRF tokens.
+* **🐇 button connection:** a one-click pairing code that is random, expires in 5 minutes and is only accepted from the same computer. The key is handed over once and stored hashed. You can revoke it under Account, and it's revoked automatically on a password change. The button can only rename your own files.
+* **Hostile files:** programs and scripts are refused, along with zip bombs and oversize files. Files are read in separate, time- and memory-limited processes, and macros are never run.
+* **Web hardening:** strict Content-Security-Policy, all data shown as text (no XSS), and anti-clickjacking headers.
+* **Tamper-evident history:** a hash-chained audit log. Admin → Security log → *Check log integrity* proves nothing was edited.
 
-You need a Windows or Linux PC or server that stays on, with **Python 3.11 or newer**.
+## Put it online (free)
 
-### Windows
-1. Install Python from python.org and tick **"Add python.exe to PATH"**.
-2. *(Optional, for scanned documents)* Install Tesseract OCR from the UB Mannheim build, including the German language. Then set `TESSERACT_CMD` in `.env`.
-3. Double-click **`setup.bat`**. It installs everything, creates an HTTPS certificate, and asks you to choose the admin password.
-4. Open `.env` and set `ALLOWED_HOSTS` to the name people will type, for example `renamer.kramski.local,localhost`.
-5. Double-click **`start.bat`**, then open `https://<server-name>:8443`.
+See **[DEPLOY.md](DEPLOY.md)**: GitHub → Neon (database) → Render (app), with an explanation of every piece.
 
-### Linux
-```bash
-sudo apt install python3-venv tesseract-ocr tesseract-ocr-deu
-./setup.sh
-. .venv/bin/activate && python run.py
-```
-For a permanent service, use systemd or Docker (`docker compose up -d`; see `docker-compose.yml`).
-
-### First steps as admin
-1. Sign in as `admin`.
-2. **Admin → Naming rules:** check the company names and email domains that belong to Kramski.
-3. **Admin → Customers & suppliers:** import the CSV (`code,name,short_name,aliases,domains,kind`).
-4. **Admin → Users:** add each person. They must choose their own password at first sign-in.
-
----
-
-## 3. Install the browser button
-
-**For one person (testing):** open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode**. Click **Load unpacked** and choose the `extension` folder.
-
-**For everyone (IT):** pack the folder and deploy it with Group Policy (`ExtensionInstallForcelist`). It is internal, so it is not published in any public store.
-
-Then each person does the following once:
-1. On the website, go to **Account → Browser button → Create key** and copy the key.
-2. In the extension **Settings**, enter the server address and the key, then click **Save and test**. Chrome asks for permission to contact that one server.
-3. Open an email or page with attachments and click the icon. Done.
-
-If attachments are stored on a different site than the page (common in webmail), the popup shows **Allow and retry** once for that site.
-
----
-
-## 4. Security
-
-| Area | What is done |
-|---|---|
-| Data stays inside | Runs on a company server. No external calls, CDNs, fonts or telemetry. File contents are never stored. |
-| Passwords | Argon2id hashing. At least 12 characters, using 3 character types, and not containing the username. Forced change at first sign-in. |
-| Brute force | 5 wrong attempts from one computer pause sign-in for that username on that computer for 15 minutes. There are also per-IP and per-username caps. A stranger cannot lock a real person out, and unknown usernames get the same answer and the same timing as wrong passwords. |
-| Sessions | Random tokens, stored only as SHA-256 hashes. `HttpOnly`, `Secure`, `SameSite=Strict`, `__Host-` cookie. 8-hour lifetime and 60-minute idle timeout. Changing a password signs out other devices. |
-| CSRF | Every change needs a per-session token header, and cross-origin requests are refused. |
-| Browser button | Personal keys, stored hashed, expire after 180 days and can be revoked. They are revoked automatically when the password changes or is reset. A key can only rename the owner's own files: it can never manage accounts or settings, or see other people's history. The extension talks only to the configured server, and only after a click. |
-| Server load | Concurrent analyses are capped globally and per person, so one user cannot exhaust the server's memory. |
-| Hostile files | Programs, scripts and macro files (`.exe`, `.hta`, `.js`, `.docm` …) are refused, even when disguised as a PDF. True-type detection, zip-bomb limits, a 50 MB cap and a decompression-bomb guard for images. Parsing happens in isolated worker processes with time and memory limits. Macros are never executed. XML is parsed safely. |
-| Web hardening | Strict Content-Security-Policy (no inline scripts), clickjacking protection, `nosniff`, no-referrer, HSTS, host-header allow-list and generic error messages. All data is displayed as text, never as HTML, which prevents XSS. |
-| Accountability | Every sign-in, analysis, rename, key and setting change goes into an **HMAC hash-chained audit log**. *Admin → Security log → Check log integrity* detects any edited or deleted entry. The CSV export is protected against Excel formula injection. |
-| Renaming | People can edit a name, but the extension stays the one detected, so a PDF can never become `.exe`. Path characters are stripped. |
-
-**Still needed at deployment (by IT):** HTTPS with a certificate from the company CA, a firewall rule that allows only the office network to reach port 8443, encrypted disk on the server (BitLocker or LUKS), nightly backups of the `data` folder, and a review or penetration test before company-wide use.
-
----
-
-## 5. Tests
+## Tests
 
 ```bash
-python scripts/make_samples.py   # realistic sample files (fictional companies)
-python -m pytest -q              # 26 tests: naming accuracy + security
+python scripts/make_samples.py   # realistic sample files (made-up people and courses)
+python -m pytest -q              # 33 tests: naming accuracy + security
 ```
 
-The tests cover login, CSRF, sign-in throttling, executable blocking, key revocation, permissions, extension keys, upload limits, zip bombs, safe names and audit-log tamper detection.
-
-## 6. Known limits
-
-* **Native CAD files** (SolidWorks, Creo, CATIA, NX) are closed formats. Their names come from the email and page context. DWG needs the free ODA File Converter (`ODA_FILE_CONVERTER` in `.env`).
-* **Password-protected PDFs** and encrypted Office files can't be read. They are named from their context and marked *Please check*.
-* **Handwritten or poor scans** give lower confidence and are flagged for review.
-* **Webmail:** Gmail and most webmail and portal pages work. A few apps (for example some Outlook Web views) generate attachments in ways an extension can't reach. Drag-and-drop on the website always works.
-
-## 7. Project layout
+## Project layout
 
 ```
-app/engine/      naming engine: detect.py, extract.py, fields.py, naming.py, rules.json, worker.py
-app/api/         auth.py, files.py, admin.py
-app/static/      website (HTML/CSS/JS, no external libraries)
-app/security.py  sessions, CSRF, tokens, rate limits, headers
-app/audit.py     tamper-evident audit log
-extension/       Chrome/Edge extension (Manifest V3)
-tests/           automated tests
+app/engine/   naming engine: detect, extract, fields, naming, rules.json, worker
+app/api/      auth, files, admin, pair (button connection)
+app/static/   website (no external libraries)
+extension/    the 🐇 button (Chrome/Edge, Manifest V3)
+tests/        automated tests
 ```
-# File_rename_tool

@@ -12,3 +12,8 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 #msg.ok { background: var(--ok-weak); color: var(--ok); }
 #msg.bad { background: var(--bad-weak); color: var(--bad); }
 .mono { font-family: var(--mono); font-size: 12px; }
+.opt-card header { gap: 8px; }
+.state { font-size: 13.5px; margin: 0 0 16px; padding: 9px 11px; border-radius: 8px; background: var(--bg); }
+details { margin-top: 18px; }
+details summary { cursor: pointer; }
+details label { margin-top: 10px; }

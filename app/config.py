@@ -28,12 +28,22 @@ def _bool(name: str, default: bool) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _db_url() -> str:
+    url = os.environ.get("DATABASE_URL", "").strip() or f"sqlite:///{DATA_DIR / 'renamer.db'}"
+    # Hosting sites hand out "postgres://..." or "postgresql://..."; SQLAlchemy needs to know the driver.
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
 class Settings:
-    database_url: str = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR / 'renamer.db'}")
+    database_url: str = _db_url()
     cookie_secure: bool = _bool("COOKIE_SECURE", True)
     session_hours: int = int(os.environ.get("SESSION_HOURS", "8"))
     idle_minutes: int = int(os.environ.get("IDLE_MINUTES", "60"))
-    allowed_hosts: list[str] = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+    allowed_hosts: list[str] = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()] + (
+        [os.environ["RENDER_EXTERNAL_HOSTNAME"]] if os.environ.get("RENDER_EXTERNAL_HOSTNAME") else [])   # Render tells us our address
     max_upload_mb: int = int(os.environ.get("MAX_UPLOAD_MB", "50"))
     workers: int = int(os.environ.get("ANALYSIS_WORKERS", "2"))
     analysis_timeout: int = int(os.environ.get("ANALYSIS_TIMEOUT", "90"))

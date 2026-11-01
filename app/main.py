@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import delete
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from .api import admin, auth, files
+from .api import admin, auth, files, pair
 from .config import settings
 from .db import SessionLocal, init_db
 from .engine import worker
@@ -22,12 +22,37 @@ log = logging.getLogger("renamer")
 STATIC = Path(__file__).parent / "static"
 
 
+def _bootstrap_admin(db):
+    """First start in the cloud: create the admin from ADMIN_USERNAME / ADMIN_PASSWORD (only if no users exist)."""
+    import os
+
+    from sqlalchemy import func, select
+
+    from . import audit
+    from .models import User
+    from .security import hash_password, password_problems
+    pw = os.environ.get("ADMIN_PASSWORD", "")
+    if not pw or db.execute(select(func.count()).select_from(User)).scalar_one() > 0:
+        return
+    name = os.environ.get("ADMIN_USERNAME", "admin").strip().lower() or "admin"
+    problem = password_problems(pw, name)
+    if problem:
+        log.error("ADMIN_PASSWORD not accepted: %s", problem)
+        return
+    u = User(username=name, display_name=name, role="admin", password_hash=hash_password(pw), must_change_password=False)
+    db.add(u)
+    db.flush()
+    audit.log(db, "admin.created_env", u, target=name, ip="startup")
+    log.warning("Created administrator '%s' from ADMIN_PASSWORD. You can remove that variable now.", name)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     with SessionLocal() as db:
         db.execute(delete(UserSession).where(UserSession.expires_at < now()))
         db.commit()
+        _bootstrap_admin(db)
     worker.start(settings.workers)
     yield
     worker.stop()
@@ -39,11 +64,21 @@ app = FastAPI(title="Smart File Renamer", lifespan=lifespan,
 
 app.add_middleware(BodyLimit)
 app.add_middleware(SecurityHeaders)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+class _HostCheck(TrustedHostMiddleware):
+    """Refuse unknown Host headers, except for the health check the hosting platform calls internally."""
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("path") == "/api/health":
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
+app.add_middleware(_HostCheck, allowed_hosts=settings.allowed_hosts)
 
 app.include_router(auth.router)
 app.include_router(files.router)
 app.include_router(admin.router)
+app.include_router(pair.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -69,7 +104,7 @@ def health():
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 PAGES = {"/": "index.html", "/login": "login.html", "/history": "history.html", "/admin": "admin.html",
-         "/account": "account.html"}
+         "/account": "account.html", "/connect": "connect.html"}
 
 
 def _page(name: str):

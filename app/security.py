@@ -53,7 +53,7 @@ def password_problems(pw: str, username: str = "") -> str | None:
         return "Use at least three of: lowercase, uppercase, digits, symbols."
     if username and username.lower() in pw.lower():
         return "Password must not contain the username."
-    if pw.lower() in {"password1234", "kramski12345", "welcome12345", "qwertyuiop12"}:
+    if pw.lower() in {"password1234", "welcome12345", "qwertyuiop12"}:
         return "This password is too common."
     return None
 
